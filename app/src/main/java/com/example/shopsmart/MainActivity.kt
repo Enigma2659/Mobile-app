@@ -17,7 +17,10 @@ import androidx.compose.material.icons.filled.ListAlt
 import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material.icons.filled.Star
+<<<<<<< HEAD
 import androidx.compose.material.icons.filled.Store
+=======
+>>>>>>> 3a76190b84a8a913a5dcfb0e21e88d8287dd35cb
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -30,11 +33,20 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+<<<<<<< HEAD
 import com.example.shopsmart.model.CartItem
 import com.example.shopsmart.model.DELIVERY_LOCATIONS
 import com.example.shopsmart.model.DeliveryLocation
 import com.example.shopsmart.model.SHOP_CATEGORIES
 import com.example.shopsmart.model.ShopItem
+=======
+import androidx.compose.material.icons.filled.AssignmentTurnedIn
+import com.example.shopsmart.model.CartItem
+import com.example.shopsmart.model.CompletedOrder
+import com.example.shopsmart.model.DeliveryLocation
+import com.example.shopsmart.model.ShopItem
+import com.example.shopsmart.repository.OrderRepository
+>>>>>>> 3a76190b84a8a913a5dcfb0e21e88d8287dd35cb
 import com.example.shopsmart.ui.*
 import com.example.shopsmart.ui.theme.ShopSmartTheme
 import kotlinx.coroutines.delay
@@ -51,11 +63,16 @@ enum class NavDestination(
     PROMOTIONS("Promotions", Icons.Default.Star),
     SMART_AI("Smart AI Budget", Icons.Default.AutoAwesome),
     MY_CART("My Cart", Icons.Default.ShoppingCart),
+<<<<<<< HEAD
     ADMIN_PANEL("System Admin Panel", Icons.Default.Store),
+=======
+    ORDERS_TRACKER("Orders & Received", Icons.Default.AssignmentTurnedIn),
+>>>>>>> 3a76190b84a8a913a5dcfb0e21e88d8287dd35cb
     CONTACT_US("Contact Us", Icons.Default.Phone),
     ABOUT_US("More About Us", Icons.Default.Info)
 }
 
+<<<<<<< HEAD
 data class CompletedOrder(
     val orderId: String,
     val firstName: String,
@@ -71,6 +88,8 @@ data class CheckoutCustomerState(
     val location: DeliveryLocation
 )
 
+=======
+>>>>>>> 3a76190b84a8a913a5dcfb0e21e88d8287dd35cb
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -80,11 +99,17 @@ class MainActivity : ComponentActivity() {
                 var showSplash by remember { mutableStateOf(true) }
                 var currentDestination by remember { mutableStateOf(NavDestination.CATALOG) }
                 var cartItems by remember { mutableStateOf(listOf<CartItem>()) }
+<<<<<<< HEAD
                 var categoriesState by remember { mutableStateOf(SHOP_CATEGORIES) }
                 var activeOrder by remember { mutableStateOf<CompletedOrder?>(null) }
                 var selectedItemForDetail by remember { mutableStateOf<ShopItem?>(null) }
                 var checkoutCustomerState by remember { mutableStateOf<CheckoutCustomerState?>(null) }
                 var isPaymentScreen by remember { mutableStateOf(false) }
+=======
+                var activeOrder by remember { mutableStateOf<CompletedOrder?>(null) }
+                var selectedItemForDetail by remember { mutableStateOf<ShopItem?>(null) }
+                var selectedLocationForCustomerInfo by remember { mutableStateOf<DeliveryLocation?>(null) }
+>>>>>>> 3a76190b84a8a913a5dcfb0e21e88d8287dd35cb
 
                 val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
                 val scope = rememberCoroutineScope()
@@ -157,8 +182,12 @@ class MainActivity : ComponentActivity() {
                                             currentDestination = destination
                                             activeOrder = null
                                             selectedItemForDetail = null
+<<<<<<< HEAD
                                             checkoutCustomerState = null
                                             isPaymentScreen = false
+=======
+                                            selectedLocationForCustomerInfo = null
+>>>>>>> 3a76190b84a8a913a5dcfb0e21e88d8287dd35cb
                                             scope.launch { drawerState.close() }
                                         },
                                         modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
@@ -177,6 +206,7 @@ class MainActivity : ComponentActivity() {
                                 },
                                 onBack = { selectedItemForDetail = null }
                             )
+<<<<<<< HEAD
                         } else if (activeOrder != null) {
                             OrderSummaryScreen(
                                 orderId = activeOrder!!.orderId,
@@ -185,6 +215,51 @@ class MainActivity : ComponentActivity() {
                                 phoneNumber = activeOrder!!.phoneNumber,
                                 deliveryLocation = activeOrder!!.deliveryLocation,
                                 cartItems = activeOrder!!.items,
+=======
+                        } else if (selectedLocationForCustomerInfo != null) {
+                            CustomerInfoScreen(
+                                selectedLocation = selectedLocationForCustomerInfo!!,
+                                itemsSubtotal = cartItems.sumOf { it.totalPrice },
+                                onBack = { selectedLocationForCustomerInfo = null },
+                                onSubmitOrder = { firstName, lastName, phoneNumber, customLocationName, payChanguTxRef ->
+                                    val randomCode = (10000..99999).random()
+                                    val orderId = "SS-$randomCode"
+
+                                    val finalLocation = if (selectedLocationForCustomerInfo!!.isCustom && customLocationName.isNotBlank()) {
+                                        DeliveryLocation("loc_custom", customLocationName, 5.0, selectedLocationForCustomerInfo!!.deliveryFee)
+                                    } else {
+                                        selectedLocationForCustomerInfo!!
+                                    }
+
+                                    val completed = CompletedOrder(
+                                        orderId = orderId,
+                                        firstName = firstName,
+                                        lastName = lastName,
+                                        phoneNumber = phoneNumber,
+                                        deliveryLocation = finalLocation,
+                                        items = cartItems,
+                                        paymentMethod = "PayChangu (Airtel Money)",
+                                        airtelNumber = phoneNumber,
+                                        payChanguTxRef = payChanguTxRef,
+                                        timestamp = System.currentTimeMillis()
+                                    )
+
+                                    // Save to Firebase Firestore Database & Local State
+                                    OrderRepository.saveOrder(completed) { }
+
+                                    activeOrder = completed
+                                    selectedLocationForCustomerInfo = null
+                                    cartItems = emptyList() // clear cart after order
+                                }
+                            )
+                        } else if (activeOrder != null) {
+                            OrderSummaryScreen(
+                                order = activeOrder!!,
+                                onViewOrdersTracker = {
+                                    activeOrder = null
+                                    currentDestination = NavDestination.ORDERS_TRACKER
+                                },
+>>>>>>> 3a76190b84a8a913a5dcfb0e21e88d8287dd35cb
                                 onFinish = {
                                     activeOrder = null
                                     currentDestination = NavDestination.CATALOG
@@ -195,7 +270,10 @@ class MainActivity : ComponentActivity() {
                                 NavDestination.CATALOG -> {
                                     CatalogScreen(
                                         cartItems = cartItems,
+<<<<<<< HEAD
                                         categories = categoriesState,
+=======
+>>>>>>> 3a76190b84a8a913a5dcfb0e21e88d8287dd35cb
                                         onAddToCart = { newItem ->
                                             cartItems = addOrMergeCartItem(cartItems, newItem)
                                         },
@@ -235,6 +313,7 @@ class MainActivity : ComponentActivity() {
                                 }
 
                                 NavDestination.MY_CART -> {
+<<<<<<< HEAD
                                     if (isPaymentScreen && checkoutCustomerState != null) {
                                         CheckoutScreen(
                                             firstName = checkoutCustomerState!!.firstName,
@@ -300,6 +379,29 @@ class MainActivity : ComponentActivity() {
                                                 cat.copy(items = cat.items.filterNot { it.id == itemId })
                                             }
                                         },
+=======
+                                    CartAndCheckoutScreen(
+                                        cartItems = cartItems,
+                                        onUpdateQuantity = { targetItem, newQty ->
+                                            cartItems = cartItems.map {
+                                                if (it.id == targetItem.id) it.copy(quantity = newQty) else it
+                                            }
+                                        },
+                                        onRemoveItem = { targetItem ->
+                                            cartItems = cartItems.filterNot { it.id == targetItem.id }
+                                        },
+                                        onProceedToCustomerInfo = { location ->
+                                            selectedLocationForCustomerInfo = location
+                                        },
+                                        onContinueShopping = { currentDestination = NavDestination.CATALOG },
+                                        onBack = { currentDestination = NavDestination.CATALOG }
+                                    )
+                                }
+
+                                NavDestination.ORDERS_TRACKER -> {
+                                    OrdersTrackerScreen(
+                                        onOpenDrawer = { scope.launch { drawerState.open() } },
+>>>>>>> 3a76190b84a8a913a5dcfb0e21e88d8287dd35cb
                                         onBack = { currentDestination = NavDestination.CATALOG }
                                     )
                                 }

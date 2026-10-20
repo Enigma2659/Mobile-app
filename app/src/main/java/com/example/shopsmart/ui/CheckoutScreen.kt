@@ -1,5 +1,6 @@
 package com.example.shopsmart.ui
 
+<<<<<<< HEAD
 import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -9,15 +10,27 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+=======
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
+>>>>>>> 3a76190b84a8a913a5dcfb0e21e88d8287dd35cb
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+<<<<<<< HEAD
 import androidx.compose.ui.res.painterResource
+=======
+>>>>>>> 3a76190b84a8a913a5dcfb0e21e88d8287dd35cb
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+<<<<<<< HEAD
 import com.example.shopsmart.R
 import com.example.shopsmart.model.CartItem
 import com.example.shopsmart.model.DeliveryLocation
@@ -34,10 +47,17 @@ import java.util.Date
 import java.util.Locale
 import java.util.Scanner
 import java.util.UUID
+=======
+import com.example.shopsmart.model.CartItem
+import com.example.shopsmart.model.DELIVERY_LOCATIONS
+import com.example.shopsmart.model.DeliveryLocation
+import java.util.Locale
+>>>>>>> 3a76190b84a8a913a5dcfb0e21e88d8287dd35cb
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CheckoutScreen(
+<<<<<<< HEAD
     firstName: String,
     lastName: String,
     deliveryLocation: DeliveryLocation,
@@ -53,12 +73,30 @@ fun CheckoutScreen(
 
     val itemsTotal = cartItems.sumOf { it.totalPrice }
     val deliveryFee = deliveryLocation.deliveryFee
+=======
+    cartItems: List<CartItem>,
+    onSubmitOrder: (firstName: String, lastName: String, location: DeliveryLocation, airtelNumber: String) -> Unit,
+    onBack: () -> Unit
+) {
+    var firstName by remember { mutableStateOf("") }
+    var lastName by remember { mutableStateOf("") }
+    var selectedLocation by remember { mutableStateOf(DELIVERY_LOCATIONS.first()) }
+    var airtelNumber by remember { mutableStateOf("") }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+
+    val itemsTotal = cartItems.sumOf { it.totalPrice }
+    val deliveryFee = selectedLocation.deliveryFee
+>>>>>>> 3a76190b84a8a913a5dcfb0e21e88d8287dd35cb
     val grandTotal = itemsTotal + deliveryFee
 
     Scaffold(
         topBar = {
             TopAppBar(
+<<<<<<< HEAD
                 title = { Text("Checkout & Airtel CTech Payment", fontWeight = FontWeight.Bold) },
+=======
+                title = { Text("Checkout & Delivery Details") },
+>>>>>>> 3a76190b84a8a913a5dcfb0e21e88d8287dd35cb
                 navigationIcon = {
                     TextButton(onClick = onBack) {
                         Text("Back", color = MaterialTheme.colorScheme.onSurface)
@@ -87,14 +125,23 @@ fun CheckoutScreen(
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Text("Items Subtotal:")
+<<<<<<< HEAD
                         Text("MK${String.format(Locale.getDefault(), "%.2f", itemsTotal)}")
+=======
+                        Text("K${String.format(Locale.getDefault(), "%.2f", itemsTotal)}")
+>>>>>>> 3a76190b84a8a913a5dcfb0e21e88d8287dd35cb
                     }
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
+<<<<<<< HEAD
                         Text("Delivery Fee (${deliveryLocation.distanceKm}km):")
                         Text("MK${String.format(Locale.getDefault(), "%.2f", deliveryFee)}")
+=======
+                        Text("Delivery Fee (${selectedLocation.distanceKm}km):")
+                        Text("K${String.format(Locale.getDefault(), "%.2f", deliveryFee)}")
+>>>>>>> 3a76190b84a8a913a5dcfb0e21e88d8287dd35cb
                     }
                     HorizontalDivider()
                     Row(
@@ -103,7 +150,11 @@ fun CheckoutScreen(
                     ) {
                         Text("Total Checkout:", fontWeight = FontWeight.Bold, fontSize = 18.sp)
                         Text(
+<<<<<<< HEAD
                             "MK${String.format(Locale.getDefault(), "%.2f", grandTotal)}",
+=======
+                            "K${String.format(Locale.getDefault(), "%.2f", grandTotal)}",
+>>>>>>> 3a76190b84a8a913a5dcfb0e21e88d8287dd35cb
                             fontWeight = FontWeight.Bold,
                             fontSize = 18.sp,
                             color = MaterialTheme.colorScheme.primary
@@ -114,6 +165,7 @@ fun CheckoutScreen(
                         Text(
                             text = errorMessage!!,
                             color = MaterialTheme.colorScheme.error,
+<<<<<<< HEAD
                             fontSize = 14.sp,
                             fontWeight = FontWeight.Bold
                         )
@@ -125,11 +177,22 @@ fun CheckoutScreen(
                             text = "Processing payment & saving to Firebase...",
                             fontSize = 12.sp,
                             color = MaterialTheme.colorScheme.primary
+=======
+                            fontSize = 14.sp
+>>>>>>> 3a76190b84a8a913a5dcfb0e21e88d8287dd35cb
                         )
                     }
 
                     Button(
                         onClick = {
+<<<<<<< HEAD
+=======
+                            // Validation
+                            if (firstName.isBlank() || lastName.isBlank()) {
+                                errorMessage = "Please enter both First Name and Last Name."
+                                return@Button
+                            }
+>>>>>>> 3a76190b84a8a913a5dcfb0e21e88d8287dd35cb
                             if (airtelNumber.isBlank() || airtelNumber.length != 10 ||
                                 (!airtelNumber.startsWith("099") && !airtelNumber.startsWith("098"))
                             ) {
@@ -137,6 +200,7 @@ fun CheckoutScreen(
                                 return@Button
                             }
                             errorMessage = null
+<<<<<<< HEAD
                             isProcessing = true
 
                             coroutineScope.launch {
@@ -169,6 +233,10 @@ fun CheckoutScreen(
                             }
                         },
                         enabled = !isProcessing,
+=======
+                            onSubmitOrder(firstName, lastName, selectedLocation, airtelNumber)
+                        },
+>>>>>>> 3a76190b84a8a913a5dcfb0e21e88d8287dd35cb
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(50.dp),
@@ -177,7 +245,11 @@ fun CheckoutScreen(
                             contentColor = MaterialTheme.colorScheme.onPrimary
                         )
                     ) {
+<<<<<<< HEAD
                         Text(text = "Pay via Airtel & Save Order", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+=======
+                        Text(text = "Place Order & Pay via Airtel", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+>>>>>>> 3a76190b84a8a913a5dcfb0e21e88d8287dd35cb
                     }
                 }
             }
@@ -192,6 +264,7 @@ fun CheckoutScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
+<<<<<<< HEAD
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
@@ -199,10 +272,76 @@ fun CheckoutScreen(
                 Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Text(text = "Customer: $firstName $lastName", fontWeight = FontWeight.Bold, fontSize = 16.sp)
                     Text(text = "Delivery Location: ${deliveryLocation.name}", fontSize = 14.sp)
+=======
+            Text(text = "Customer Information (Compulsory)", fontWeight = FontWeight.Bold, fontSize = 18.sp)
+
+            OutlinedTextField(
+                value = firstName,
+                onValueChange = { firstName = it },
+                label = { Text("First Name *") },
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            OutlinedTextField(
+                value = lastName,
+                onValueChange = { lastName = it },
+                label = { Text("Last Name *") },
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(text = "Select Delivery Location", fontWeight = FontWeight.Bold, fontSize = 18.sp)
+
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                DELIVERY_LOCATIONS.forEach { location ->
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .selectable(
+                                selected = (selectedLocation == location),
+                                onClick = { selectedLocation = location }
+                            ),
+                        colors = CardDefaults.cardColors(
+                            containerColor = if (selectedLocation == location)
+                                MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
+                            else
+                                MaterialTheme.colorScheme.surface
+                        )
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(12.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                RadioButton(
+                                    selected = (selectedLocation == location),
+                                    onClick = { selectedLocation = location }
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Column {
+                                    Text(text = location.name, fontWeight = FontWeight.Medium)
+                                    Text(
+                                        text = "Distance: ${location.distanceKm} km",
+                                        fontSize = 12.sp,
+                                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                                    )
+                                }
+                            }
+                            Text(
+                                text = "K${String.format(Locale.getDefault(), "%.2f", location.deliveryFee)}",
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+>>>>>>> 3a76190b84a8a913a5dcfb0e21e88d8287dd35cb
                 }
             }
 
             Spacer(modifier = Modifier.height(8.dp))
+<<<<<<< HEAD
 
             // Payment Information Header with Airtel Logo at top left corner of the word Airtel
             Row(
@@ -216,6 +355,9 @@ fun CheckoutScreen(
                 )
                 Text(text = "Payment Information (Airtel CTech Gateway)", fontWeight = FontWeight.Bold, fontSize = 18.sp)
             }
+=======
+            Text(text = "Payment Information (Airtel)", fontWeight = FontWeight.Bold, fontSize = 18.sp)
+>>>>>>> 3a76190b84a8a913a5dcfb0e21e88d8287dd35cb
 
             OutlinedTextField(
                 value = airtelNumber,
@@ -229,6 +371,7 @@ fun CheckoutScreen(
         }
     }
 }
+<<<<<<< HEAD
 
 // CTech Pay Airtel Mobile Payment Gateway Helper
 suspend fun processCtechAirtelPayment(
@@ -328,3 +471,5 @@ fun saveOrderToFirestore(
             onError(e)
         }
 }
+=======
+>>>>>>> 3a76190b84a8a913a5dcfb0e21e88d8287dd35cb

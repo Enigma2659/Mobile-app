@@ -9,7 +9,11 @@ activityCompose = "1.13.0"
 kotlin = "2.2.10"
 composeBom = "2026.02.01"
 googleGmsGoogleServices = "4.5.0"
+<<<<<<< HEAD
 firebaseFirestore = "27.0.1"
+=======
+firebaseFunctions = "23.0.0"
+>>>>>>> 3a76190b84a8a913a5dcfb0e21e88d8287dd35cb
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -26,7 +30,11 @@ androidx-compose-ui-tooling-preview = { group = "androidx.compose.ui", name = "u
 androidx-compose-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-manifest" }
 androidx-compose-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit4" }
 androidx-compose-material3 = { group = "androidx.compose.material3", name = "material3" }
+<<<<<<< HEAD
 firebase-firestore = { group = "com.google.firebase", name = "firebase-firestore", version.ref = "firebaseFirestore" }
+=======
+firebase-functions = { group = "com.google.firebase", name = "firebase-functions", version.ref = "firebaseFunctions" }
+>>>>>>> 3a76190b84a8a913a5dcfb0e21e88d8287dd35cb
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

@@ -254,7 +254,10 @@ fun PromotionCardItem(
                 Button(
                     onClick = {
                         val cartItem = CartItem(
+<<<<<<< HEAD
                             itemId = promotion.id,
+=======
+>>>>>>> 3a76190b84a8a913a5dcfb0e21e88d8287dd35cb
                             itemTitle = promotion.name,
                             selectedProcessor = promotion.selectedProcessor,
                             selectedWeight = promotion.selectedWeight,

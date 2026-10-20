@@ -45,7 +45,13 @@ dependencies {
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
+<<<<<<< HEAD
     implementation(libs.firebase.firestore)
+=======
+    implementation(platform("com.google.firebase:firebase-bom:33.9.0"))
+    implementation(libs.firebase.functions)
+    implementation("com.google.firebase:firebase-firestore-ktx")
+>>>>>>> 3a76190b84a8a913a5dcfb0e21e88d8287dd35cb
     testImplementation(libs.junit)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)

@@ -1,7 +1,10 @@
 package com.example.shopsmart.ui
 
 import androidx.compose.foundation.BorderStroke
+<<<<<<< HEAD
 import androidx.compose.foundation.Image
+=======
+>>>>>>> 3a76190b84a8a913a5dcfb0e21e88d8287dd35cb
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -18,14 +21,22 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+<<<<<<< HEAD
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+=======
+>>>>>>> 3a76190b84a8a913a5dcfb0e21e88d8287dd35cb
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.shopsmart.model.CartItem
+<<<<<<< HEAD
+=======
+import com.example.shopsmart.model.DELIVERY_LOCATIONS
+import com.example.shopsmart.model.DeliveryLocation
+>>>>>>> 3a76190b84a8a913a5dcfb0e21e88d8287dd35cb
 import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -34,14 +45,31 @@ fun CartAndCheckoutScreen(
     cartItems: List<CartItem>,
     onUpdateQuantity: (CartItem, Int) -> Unit,
     onRemoveItem: (CartItem) -> Unit,
+<<<<<<< HEAD
     onProceedToCustomerInfo: () -> Unit,
+=======
+    onProceedToCustomerInfo: (selectedLocation: DeliveryLocation) -> Unit,
+>>>>>>> 3a76190b84a8a913a5dcfb0e21e88d8287dd35cb
     onContinueShopping: () -> Unit,
     onBack: () -> Unit
 ) {
     var isAgreed by remember { mutableStateOf(false) }
+<<<<<<< HEAD
     var errorMessage by remember { mutableStateOf<String?>(null) }
 
     val itemsSubtotal = cartItems.sumOf { it.totalPrice }
+=======
+
+    // Dropdown combo box state for delivery location
+    var locationExpanded by remember { mutableStateOf(false) }
+    var selectedLocation by remember { mutableStateOf(DELIVERY_LOCATIONS.first()) }
+
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+
+    val itemsSubtotal = cartItems.sumOf { it.totalPrice }
+    val deliveryFee = selectedLocation.deliveryFee
+    val grandTotal = itemsSubtotal + deliveryFee
+>>>>>>> 3a76190b84a8a913a5dcfb0e21e88d8287dd35cb
 
     Scaffold(
         topBar = {
@@ -55,7 +83,11 @@ fun CartAndCheckoutScreen(
                             modifier = Modifier.padding(end = 8.dp)
                         )
                         Text(
+<<<<<<< HEAD
                             text = "Step 1: Cart & Review",
+=======
+                            text = "My Cart & Delivery",
+>>>>>>> 3a76190b84a8a913a5dcfb0e21e88d8287dd35cb
                             fontWeight = FontWeight.Bold,
                             fontSize = 18.sp,
                             maxLines = 1,
@@ -122,8 +154,14 @@ fun CartAndCheckoutScreen(
                     .padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(20.dp)
             ) {
+<<<<<<< HEAD
                 Text(
                     text = "Review Cart Items",
+=======
+                // SECTION 1: Cart Items Summary with + and - quantity buttons
+                Text(
+                    text = "1. Cart Summary",
+>>>>>>> 3a76190b84a8a913a5dcfb0e21e88d8287dd35cb
                     fontWeight = FontWeight.Bold,
                     fontSize = 18.sp
                 )
@@ -152,6 +190,7 @@ fun CartAndCheckoutScreen(
                                 ) {
                                     Row(
                                         modifier = Modifier.fillMaxWidth(),
+<<<<<<< HEAD
                                         horizontalArrangement = Arrangement.spacedBy(10.dp),
                                         verticalAlignment = Alignment.CenterVertically
                                     ) {
@@ -168,6 +207,12 @@ fun CartAndCheckoutScreen(
                                             modifier = Modifier.weight(1f),
                                             verticalArrangement = Arrangement.spacedBy(2.dp)
                                         ) {
+=======
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.Top
+                                    ) {
+                                        Column(modifier = Modifier.weight(1f)) {
+>>>>>>> 3a76190b84a8a913a5dcfb0e21e88d8287dd35cb
                                             Text(
                                                 text = cartItem.itemTitle,
                                                 fontWeight = FontWeight.Bold,
@@ -187,6 +232,7 @@ fun CartAndCheckoutScreen(
                                             )
                                         }
 
+<<<<<<< HEAD
                                         Column(
                                             horizontalAlignment = Alignment.End,
                                             verticalArrangement = Arrangement.spacedBy(4.dp)
@@ -209,28 +255,51 @@ fun CartAndCheckoutScreen(
                                                 color = MaterialTheme.colorScheme.primary
                                             )
                                         }
+=======
+                                        Text(
+                                            text = "MK${String.format(Locale.getDefault(), "%.2f", cartItem.totalPrice)}",
+                                            fontWeight = FontWeight.Bold,
+                                            fontSize = 16.sp,
+                                            color = MaterialTheme.colorScheme.primary
+                                        )
+>>>>>>> 3a76190b84a8a913a5dcfb0e21e88d8287dd35cb
                                     }
 
                                     HorizontalDivider()
 
+<<<<<<< HEAD
+=======
+                                    // Bottom row: Quantity controls + Prominent Recycle Bin at the very bottom
+>>>>>>> 3a76190b84a8a913a5dcfb0e21e88d8287dd35cb
                                     Row(
                                         modifier = Modifier.fillMaxWidth(),
                                         horizontalArrangement = Arrangement.SpaceBetween,
                                         verticalAlignment = Alignment.CenterVertically
                                     ) {
+<<<<<<< HEAD
                                         Text(text = "Quantity:", fontSize = 13.sp, fontWeight = FontWeight.Medium)
 
+=======
+>>>>>>> 3a76190b84a8a913a5dcfb0e21e88d8287dd35cb
                                         Row(
                                             verticalAlignment = Alignment.CenterVertically,
                                             horizontalArrangement = Arrangement.spacedBy(2.dp)
                                         ) {
+<<<<<<< HEAD
+=======
+                                            Text(text = "Qty:", fontSize = 13.sp, fontWeight = FontWeight.Medium)
+>>>>>>> 3a76190b84a8a913a5dcfb0e21e88d8287dd35cb
                                             IconButton(
                                                 onClick = {
                                                     if (cartItem.quantity > 1) {
                                                         onUpdateQuantity(cartItem, cartItem.quantity - 1)
                                                     }
                                                 },
+<<<<<<< HEAD
                                                 modifier = Modifier.size(30.dp)
+=======
+                                                modifier = Modifier.size(32.dp)
+>>>>>>> 3a76190b84a8a913a5dcfb0e21e88d8287dd35cb
                                             ) {
                                                 Icon(
                                                     imageVector = Icons.Default.Remove,
@@ -247,7 +316,11 @@ fun CartAndCheckoutScreen(
 
                                             IconButton(
                                                 onClick = { onUpdateQuantity(cartItem, cartItem.quantity + 1) },
+<<<<<<< HEAD
                                                 modifier = Modifier.size(30.dp)
+=======
+                                                modifier = Modifier.size(32.dp)
+>>>>>>> 3a76190b84a8a913a5dcfb0e21e88d8287dd35cb
                                             ) {
                                                 Icon(
                                                     imageVector = Icons.Default.Add,
@@ -255,12 +328,45 @@ fun CartAndCheckoutScreen(
                                                 )
                                             }
                                         }
+<<<<<<< HEAD
+=======
+
+                                        // Prominent Recycle Bin / Delete button at the very bottom of the item card
+                                        OutlinedButton(
+                                            onClick = { onRemoveItem(cartItem) },
+                                            colors = ButtonDefaults.outlinedButtonColors(
+                                                contentColor = MaterialTheme.colorScheme.error,
+                                                containerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.2f)
+                                            ),
+                                            border = BorderStroke(1.dp, MaterialTheme.colorScheme.error),
+                                            contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
+                                            modifier = Modifier.height(34.dp)
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Default.Delete,
+                                                contentDescription = "Recycle Bin",
+                                                modifier = Modifier.size(16.dp),
+                                                tint = MaterialTheme.colorScheme.error
+                                            )
+                                            Spacer(modifier = Modifier.width(4.dp))
+                                            Text(
+                                            text = "Delete",
+                                                fontSize = 11.sp,
+                                                fontWeight = FontWeight.Bold,
+                                                color = MaterialTheme.colorScheme.error
+                                            )
+                                        }
+>>>>>>> 3a76190b84a8a913a5dcfb0e21e88d8287dd35cb
                                     }
                                 }
                             }
 
                             if (index < cartItems.lastIndex) {
+<<<<<<< HEAD
                                 Spacer(modifier = Modifier.height(8.dp))
+=======
+                                Spacer(modifier = Modifier.height(10.dp))
+>>>>>>> 3a76190b84a8a913a5dcfb0e21e88d8287dd35cb
                             }
                         }
 
@@ -270,12 +376,20 @@ fun CartAndCheckoutScreen(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
+<<<<<<< HEAD
                             Text("Subtotal:", fontWeight = FontWeight.SemiBold)
                             Text(
                                 "MK${String.format(Locale.getDefault(), "%.2f", itemsSubtotal)}",
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 16.sp,
                                 color = MaterialTheme.colorScheme.primary
+=======
+                            Text("Items Subtotal:", fontWeight = FontWeight.SemiBold)
+                            Text(
+                                "MK${String.format(Locale.getDefault(), "%.2f", itemsSubtotal)}",
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 16.sp
+>>>>>>> 3a76190b84a8a913a5dcfb0e21e88d8287dd35cb
                             )
                         }
                     }
@@ -311,6 +425,115 @@ fun CartAndCheckoutScreen(
                     }
                 }
 
+<<<<<<< HEAD
+=======
+                // SECTION 2: Select Delivery Location (word "Combo Box" removed as requested!)
+                Text(
+                    text = "2. Select Delivery Location",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 18.sp
+                )
+
+                ExposedDropdownMenuBox(
+                    expanded = locationExpanded,
+                    onExpandedChange = { locationExpanded = !locationExpanded },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    // Closed text field value showing ONLY location name (no price/distance indicated next to it as requested!)
+                    OutlinedTextField(
+                        value = selectedLocation.name,
+                        onValueChange = {},
+                        readOnly = true,
+                        label = { Text("Choose Delivery Location") },
+                        trailingIcon = {
+                            ExposedDropdownMenuDefaults.TrailingIcon(expanded = locationExpanded)
+                        },
+                        colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(
+                            focusedBorderColor = MaterialTheme.colorScheme.primary
+                        ),
+                        modifier = Modifier
+                            .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
+                            .fillMaxWidth()
+                    )
+
+                    ExposedDropdownMenu(
+                        expanded = locationExpanded,
+                        onDismissRequest = { locationExpanded = false }
+                    ) {
+                        DELIVERY_LOCATIONS.forEach { location ->
+                            DropdownMenuItem(
+                                text = {
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Text(
+                                            text = location.name,
+                                            fontWeight = FontWeight.Medium,
+                                            modifier = Modifier.weight(1f)
+                                        )
+                                        Text(
+                                            text = "${location.distanceKm.toInt()} km (MK${String.format(Locale.getDefault(), "%.0f", location.deliveryFee)})",
+                                            fontWeight = FontWeight.Bold,
+                                            color = MaterialTheme.colorScheme.primary,
+                                            fontSize = 13.sp
+                                        )
+                                    }
+                                },
+                                onClick = {
+                                    selectedLocation = location
+                                    locationExpanded = false
+                                }
+                            )
+                        }
+                    }
+                }
+
+                // SECTION 3: Updated Total according to Delivery Fee (K1000 per km)
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Column(
+                        modifier = Modifier.padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text("Items Subtotal:")
+                            Text("MK${String.format(Locale.getDefault(), "%.2f", itemsSubtotal)}")
+                        }
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text("Delivery Fee:")
+                            Text("MK${String.format(Locale.getDefault(), "%.2f", deliveryFee)}")
+                        }
+
+                        HorizontalDivider()
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text("ESTIMATED TOTAL:", fontWeight = FontWeight.ExtraBold, fontSize = 18.sp)
+                            Text(
+                                "MK${String.format(Locale.getDefault(), "%.2f", grandTotal)}",
+                                fontWeight = FontWeight.ExtraBold,
+                                fontSize = 20.sp,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                    }
+                }
+
+>>>>>>> 3a76190b84a8a913a5dcfb0e21e88d8287dd35cb
                 if (errorMessage != null) {
                     Text(
                         text = errorMessage!!,
@@ -320,6 +543,10 @@ fun CartAndCheckoutScreen(
                     )
                 }
 
+<<<<<<< HEAD
+=======
+                // PROCEED TO CUSTOMER INFO BUTTON
+>>>>>>> 3a76190b84a8a913a5dcfb0e21e88d8287dd35cb
                 Button(
                     onClick = {
                         if (!isAgreed) {
@@ -327,7 +554,11 @@ fun CartAndCheckoutScreen(
                             return@Button
                         }
                         errorMessage = null
+<<<<<<< HEAD
                         onProceedToCustomerInfo()
+=======
+                        onProceedToCustomerInfo(selectedLocation)
+>>>>>>> 3a76190b84a8a913a5dcfb0e21e88d8287dd35cb
                     },
                     modifier = Modifier
                         .fillMaxWidth()
@@ -338,7 +569,11 @@ fun CartAndCheckoutScreen(
                     )
                 ) {
                     Text(
+<<<<<<< HEAD
                         text = "Go to Customer Details →",
+=======
+                        text = "Proceed to Customer Details →",
+>>>>>>> 3a76190b84a8a913a5dcfb0e21e88d8287dd35cb
                         fontWeight = FontWeight.Bold,
                         fontSize = 16.sp
                     )

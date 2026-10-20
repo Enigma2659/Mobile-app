@@ -29,7 +29,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.shopsmart.R
 import com.example.shopsmart.model.CartItem
+<<<<<<< HEAD
 import com.example.shopsmart.model.Category
+=======
+>>>>>>> 3a76190b84a8a913a5dcfb0e21e88d8287dd35cb
 import com.example.shopsmart.model.SHOP_CATEGORIES
 import com.example.shopsmart.model.ShopItem
 import java.util.Locale
@@ -38,7 +41,10 @@ import java.util.Locale
 @Composable
 fun CatalogScreen(
     cartItems: List<CartItem>,
+<<<<<<< HEAD
     categories: List<Category> = SHOP_CATEGORIES,
+=======
+>>>>>>> 3a76190b84a8a913a5dcfb0e21e88d8287dd35cb
     onAddToCart: (CartItem) -> Unit,
     onSelectItem: (ShopItem) -> Unit,
     onOpenDrawer: () -> Unit,
@@ -239,7 +245,11 @@ fun CatalogScreen(
                                 label = { Text("All Items") }
                             )
                         }
+<<<<<<< HEAD
                         items(categories) { category ->
+=======
+                        items(SHOP_CATEGORIES) { category ->
+>>>>>>> 3a76190b84a8a913a5dcfb0e21e88d8287dd35cb
                             FilterChip(
                                 selected = selectedCategoryId == category.id,
                                 onClick = { selectedCategoryId = category.id },
@@ -252,9 +262,15 @@ fun CatalogScreen(
 
             // Category list with Shop Items
             val displayedCategories = if (selectedCategoryId == 0) {
+<<<<<<< HEAD
                 categories
             } else {
                 categories.filter { it.id == selectedCategoryId }
+=======
+                SHOP_CATEGORIES
+            } else {
+                SHOP_CATEGORIES.filter { it.id == selectedCategoryId }
+>>>>>>> 3a76190b84a8a913a5dcfb0e21e88d8287dd35cb
             }
 
             items(displayedCategories) { category ->
@@ -423,7 +439,10 @@ fun CatalogItemRow(
             Button(
                 onClick = {
                     val cartItem = CartItem(
+<<<<<<< HEAD
                         itemId = shopItem.id,
+=======
+>>>>>>> 3a76190b84a8a913a5dcfb0e21e88d8287dd35cb
                         itemTitle = shopItem.name,
                         selectedProcessor = selectedProcessor,
                         selectedWeight = selectedWeight,
@@ -450,6 +469,7 @@ fun CatalogItemRow(
     }
 }
 
+<<<<<<< HEAD
 fun getDrawableRes(itemId: String, processor: String, itemTitle: String = ""): Int {
     val id = if (itemId.isNotBlank()) itemId else when {
         itemTitle.contains("Rice", ignoreCase = true) -> "rice"
@@ -462,6 +482,10 @@ fun getDrawableRes(itemId: String, processor: String, itemTitle: String = ""): I
         else -> "icon"
     }
     return when (id) {
+=======
+fun getDrawableRes(itemId: String, processor: String): Int {
+    return when (itemId) {
+>>>>>>> 3a76190b84a8a913a5dcfb0e21e88d8287dd35cb
         "rice" -> when (processor) {
             "Kilombero" -> R.drawable.kilombero_rice
             "Pishori" -> R.drawable.pishori_rice

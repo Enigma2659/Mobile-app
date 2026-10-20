@@ -44,7 +44,10 @@ data class PromotionItem(
 
 data class CartItem(
     val id: String = UUID.randomUUID().toString(),
+<<<<<<< HEAD
     val itemId: String = "",
+=======
+>>>>>>> 3a76190b84a8a913a5dcfb0e21e88d8287dd35cb
     val itemTitle: String,
     val selectedProcessor: String,
     val selectedWeight: String,
@@ -58,6 +61,7 @@ data class DeliveryLocation(
     val id: String,
     val name: String,
     val distanceKm: Double,
+<<<<<<< HEAD
     val deliveryFee: Double
 )
 
@@ -65,6 +69,37 @@ val DELIVERY_LOCATIONS = listOf(
     DeliveryLocation("loc_1", "Mponda Primary School", 2.0, 2000.0),
     DeliveryLocation("loc_2", "UNIMA Campus", 6.0, 6000.0),
     DeliveryLocation("loc_3", "Zomba Matawale", 4.0, 4000.0)
+=======
+    val deliveryFee: Double,
+    val isCustom: Boolean = false
+)
+
+data class CompletedOrder(
+    val orderId: String,
+    val firstName: String,
+    val lastName: String,
+    val phoneNumber: String,
+    val deliveryLocation: DeliveryLocation,
+    val items: List<CartItem>,
+    val itemsSubtotal: Double = items.sumOf { it.totalPrice },
+    val deliveryFee: Double = deliveryLocation.deliveryFee,
+    val grandTotal: Double = itemsSubtotal + deliveryFee,
+    val paymentMethod: String = "PayChangu (Airtel Money)",
+    val airtelNumber: String = "",
+    val payChanguTxRef: String = "",
+    val timestamp: Long = System.currentTimeMillis(),
+    val isReceived: Boolean = false,
+    val receivedAt: Long? = null
+)
+
+val DELIVERY_LOCATIONS = listOf(
+    DeliveryLocation("loc_1", "Mponda Primary School (Physical Place)", 2.0, 2000.0),
+    DeliveryLocation("loc_2", "UNIMA Campus - Main Gate (Physical Place)", 6.0, 6000.0),
+    DeliveryLocation("loc_3", "Zomba Matawale Market (Physical Place)", 4.0, 4000.0),
+    DeliveryLocation("loc_4", "City Center Bus Depot (Physical Place)", 3.0, 3000.0),
+    DeliveryLocation("loc_5", "Main Post Office / Market Square (Physical Place)", 2.5, 2500.0),
+    DeliveryLocation("loc_custom", "Deliver to My Location / Address", 5.0, 5000.0, isCustom = true)
+>>>>>>> 3a76190b84a8a913a5dcfb0e21e88d8287dd35cb
 )
 
 val PROMOTIONS_LIST = listOf(
@@ -205,11 +240,19 @@ val SHOP_CATEGORIES = listOf(
                 categoryId = 4,
                 processors = listOf("Beef Sausages"),
                 weightsOrSizes = listOf("400g", "700g"),
+<<<<<<< HEAD
                 basePrice = 50.0,
                 description = "Ready-to-cook savory sausage packs.",
                 priceTable = mapOf(
                     Pair("Beef Sausages", "400g") to 50.0,
                     Pair("Beef Sausages", "700g") to 65.0
+=======
+                basePrice = 3200.0,
+                description = "Ready-to-cook savory sausage packs.",
+                priceTable = mapOf(
+                    Pair("Beef Sausages", "400g") to 3200.0,
+                    Pair("Beef Sausages", "700g") to 5500.0
+>>>>>>> 3a76190b84a8a913a5dcfb0e21e88d8287dd35cb
                 )
             ),
             ShopItem(
@@ -218,6 +261,7 @@ val SHOP_CATEGORIES = listOf(
                 categoryId = 4,
                 processors = listOf("Full Chicken", "Liver", "Wings"),
                 weightsOrSizes = listOf("1kg", "2kg"),
+<<<<<<< HEAD
                 basePrice = 60.0,
                 description = "Hygienically dressed chicken portions.",
                 priceTable = mapOf(
@@ -227,6 +271,17 @@ val SHOP_CATEGORIES = listOf(
                     Pair("Liver", "2kg") to 75.0,
                     Pair("Wings", "1kg") to 58.0,
                     Pair("Wings", "2kg") to 78.0
+=======
+                basePrice = 3600.0,
+                description = "Hygienically dressed chicken portions.",
+                priceTable = mapOf(
+                    Pair("Full Chicken", "1kg") to 3600.0,
+                    Pair("Full Chicken", "2kg") to 7200.0,
+                    Pair("Liver", "1kg") to 3000.0,
+                    Pair("Liver", "2kg") to 5900.0,
+                    Pair("Wings", "1kg") to 4000.0,
+                    Pair("Wings", "2kg") to 7900.0
+>>>>>>> 3a76190b84a8a913a5dcfb0e21e88d8287dd35cb
                 )
             )
         )
