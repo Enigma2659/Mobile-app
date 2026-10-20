@@ -29,6 +29,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.shopsmart.R
 import com.example.shopsmart.model.CartItem
+import com.example.shopsmart.model.Category
 import com.example.shopsmart.model.SHOP_CATEGORIES
 import com.example.shopsmart.model.ShopItem
 import java.util.Locale
@@ -37,6 +38,7 @@ import java.util.Locale
 @Composable
 fun CatalogScreen(
     cartItems: List<CartItem>,
+    categories: List<Category> = SHOP_CATEGORIES,
     onAddToCart: (CartItem) -> Unit,
     onSelectItem: (ShopItem) -> Unit,
     onOpenDrawer: () -> Unit,
@@ -237,7 +239,7 @@ fun CatalogScreen(
                                 label = { Text("All Items") }
                             )
                         }
-                        items(SHOP_CATEGORIES) { category ->
+                        items(categories) { category ->
                             FilterChip(
                                 selected = selectedCategoryId == category.id,
                                 onClick = { selectedCategoryId = category.id },
@@ -250,9 +252,9 @@ fun CatalogScreen(
 
             // Category list with Shop Items
             val displayedCategories = if (selectedCategoryId == 0) {
-                SHOP_CATEGORIES
+                categories
             } else {
-                SHOP_CATEGORIES.filter { it.id == selectedCategoryId }
+                categories.filter { it.id == selectedCategoryId }
             }
 
             items(displayedCategories) { category ->
@@ -421,6 +423,7 @@ fun CatalogItemRow(
             Button(
                 onClick = {
                     val cartItem = CartItem(
+                        itemId = shopItem.id,
                         itemTitle = shopItem.name,
                         selectedProcessor = selectedProcessor,
                         selectedWeight = selectedWeight,
@@ -447,8 +450,18 @@ fun CatalogItemRow(
     }
 }
 
-fun getDrawableRes(itemId: String, processor: String): Int {
-    return when (itemId) {
+fun getDrawableRes(itemId: String, processor: String, itemTitle: String = ""): Int {
+    val id = if (itemId.isNotBlank()) itemId else when {
+        itemTitle.contains("Rice", ignoreCase = true) -> "rice"
+        itemTitle.contains("Flour", ignoreCase = true) -> "flour"
+        itemTitle.contains("Sugar", ignoreCase = true) -> "sugar"
+        itemTitle.contains("Oil", ignoreCase = true) -> "cooking_oil"
+        itemTitle.contains("Toothpaste", ignoreCase = true) || itemTitle.contains("Colgate", ignoreCase = true) -> "toothpaste"
+        itemTitle.contains("Sausage", ignoreCase = true) -> "sausage"
+        itemTitle.contains("Chicken", ignoreCase = true) || itemTitle.contains("Liver", ignoreCase = true) || itemTitle.contains("Wings", ignoreCase = true) -> "chicken_parts"
+        else -> "icon"
+    }
+    return when (id) {
         "rice" -> when (processor) {
             "Kilombero" -> R.drawable.kilombero_rice
             "Pishori" -> R.drawable.pishori_rice

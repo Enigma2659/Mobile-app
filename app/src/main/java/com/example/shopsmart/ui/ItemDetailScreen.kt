@@ -202,6 +202,7 @@ fun ItemDetailScreen(
                 Button(
                     onClick = {
                         val cartItem = CartItem(
+                            itemId = item.id,
                             itemTitle = item.name,
                             selectedProcessor = selectedProcessor,
                             selectedWeight = selectedWeight,

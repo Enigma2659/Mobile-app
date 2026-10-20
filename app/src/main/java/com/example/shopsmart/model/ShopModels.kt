@@ -44,6 +44,7 @@ data class PromotionItem(
 
 data class CartItem(
     val id: String = UUID.randomUUID().toString(),
+    val itemId: String = "",
     val itemTitle: String,
     val selectedProcessor: String,
     val selectedWeight: String,
@@ -204,11 +205,11 @@ val SHOP_CATEGORIES = listOf(
                 categoryId = 4,
                 processors = listOf("Beef Sausages"),
                 weightsOrSizes = listOf("400g", "700g"),
-                basePrice = 3200.0,
+                basePrice = 50.0,
                 description = "Ready-to-cook savory sausage packs.",
                 priceTable = mapOf(
-                    Pair("Beef Sausages", "400g") to 3200.0,
-                    Pair("Beef Sausages", "700g") to 5500.0
+                    Pair("Beef Sausages", "400g") to 50.0,
+                    Pair("Beef Sausages", "700g") to 65.0
                 )
             ),
             ShopItem(
@@ -217,15 +218,15 @@ val SHOP_CATEGORIES = listOf(
                 categoryId = 4,
                 processors = listOf("Full Chicken", "Liver", "Wings"),
                 weightsOrSizes = listOf("1kg", "2kg"),
-                basePrice = 3600.0,
+                basePrice = 60.0,
                 description = "Hygienically dressed chicken portions.",
                 priceTable = mapOf(
-                    Pair("Full Chicken", "1kg") to 3600.0,
-                    Pair("Full Chicken", "2kg") to 7200.0,
-                    Pair("Liver", "1kg") to 3000.0,
-                    Pair("Liver", "2kg") to 5900.0,
-                    Pair("Wings", "1kg") to 4000.0,
-                    Pair("Wings", "2kg") to 7900.0
+                    Pair("Full Chicken", "1kg") to 60.0,
+                    Pair("Full Chicken", "2kg") to 80.0,
+                    Pair("Liver", "1kg") to 55.0,
+                    Pair("Liver", "2kg") to 75.0,
+                    Pair("Wings", "1kg") to 58.0,
+                    Pair("Wings", "2kg") to 78.0
                 )
             )
         )

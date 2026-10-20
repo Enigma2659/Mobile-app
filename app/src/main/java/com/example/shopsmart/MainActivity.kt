@@ -17,6 +17,7 @@ import androidx.compose.material.icons.filled.ListAlt
 import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.Store
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -30,7 +31,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.shopsmart.model.CartItem
+import com.example.shopsmart.model.DELIVERY_LOCATIONS
 import com.example.shopsmart.model.DeliveryLocation
+import com.example.shopsmart.model.SHOP_CATEGORIES
 import com.example.shopsmart.model.ShopItem
 import com.example.shopsmart.ui.*
 import com.example.shopsmart.ui.theme.ShopSmartTheme
@@ -48,6 +51,7 @@ enum class NavDestination(
     PROMOTIONS("Promotions", Icons.Default.Star),
     SMART_AI("Smart AI Budget", Icons.Default.AutoAwesome),
     MY_CART("My Cart", Icons.Default.ShoppingCart),
+    ADMIN_PANEL("System Admin Panel", Icons.Default.Store),
     CONTACT_US("Contact Us", Icons.Default.Phone),
     ABOUT_US("More About Us", Icons.Default.Info)
 }
@@ -61,6 +65,12 @@ data class CompletedOrder(
     val items: List<CartItem>
 )
 
+data class CheckoutCustomerState(
+    val firstName: String,
+    val lastName: String,
+    val location: DeliveryLocation
+)
+
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -70,9 +80,11 @@ class MainActivity : ComponentActivity() {
                 var showSplash by remember { mutableStateOf(true) }
                 var currentDestination by remember { mutableStateOf(NavDestination.CATALOG) }
                 var cartItems by remember { mutableStateOf(listOf<CartItem>()) }
+                var categoriesState by remember { mutableStateOf(SHOP_CATEGORIES) }
                 var activeOrder by remember { mutableStateOf<CompletedOrder?>(null) }
                 var selectedItemForDetail by remember { mutableStateOf<ShopItem?>(null) }
-                var selectedLocationForCustomerInfo by remember { mutableStateOf<DeliveryLocation?>(null) }
+                var checkoutCustomerState by remember { mutableStateOf<CheckoutCustomerState?>(null) }
+                var isPaymentScreen by remember { mutableStateOf(false) }
 
                 val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
                 val scope = rememberCoroutineScope()
@@ -145,7 +157,8 @@ class MainActivity : ComponentActivity() {
                                             currentDestination = destination
                                             activeOrder = null
                                             selectedItemForDetail = null
-                                            selectedLocationForCustomerInfo = null
+                                            checkoutCustomerState = null
+                                            isPaymentScreen = false
                                             scope.launch { drawerState.close() }
                                         },
                                         modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
@@ -163,27 +176,6 @@ class MainActivity : ComponentActivity() {
                                     selectedItemForDetail = null
                                 },
                                 onBack = { selectedItemForDetail = null }
-                            )
-                        } else if (selectedLocationForCustomerInfo != null) {
-                            CustomerInfoScreen(
-                                selectedLocation = selectedLocationForCustomerInfo!!,
-                                itemsSubtotal = cartItems.sumOf { it.totalPrice },
-                                onBack = { selectedLocationForCustomerInfo = null },
-                                onSubmitOrder = { firstName, lastName, phoneNumber ->
-                                    val timeStamp = SimpleDateFormat("yyyyMMddHHmmss", Locale.getDefault()).format(Date())
-                                    val orderId = "SS-$timeStamp"
-                                    val completed = CompletedOrder(
-                                        orderId = orderId,
-                                        firstName = firstName,
-                                        lastName = lastName,
-                                        phoneNumber = phoneNumber,
-                                        deliveryLocation = selectedLocationForCustomerInfo!!,
-                                        items = cartItems
-                                    )
-                                    activeOrder = completed
-                                    selectedLocationForCustomerInfo = null
-                                    cartItems = emptyList() // clear cart after order
-                                }
                             )
                         } else if (activeOrder != null) {
                             OrderSummaryScreen(
@@ -203,6 +195,7 @@ class MainActivity : ComponentActivity() {
                                 NavDestination.CATALOG -> {
                                     CatalogScreen(
                                         cartItems = cartItems,
+                                        categories = categoriesState,
                                         onAddToCart = { newItem ->
                                             cartItems = addOrMergeCartItem(cartItems, newItem)
                                         },
@@ -242,20 +235,71 @@ class MainActivity : ComponentActivity() {
                                 }
 
                                 NavDestination.MY_CART -> {
-                                    CartAndCheckoutScreen(
-                                        cartItems = cartItems,
-                                        onUpdateQuantity = { targetItem, newQty ->
-                                            cartItems = cartItems.map {
-                                                if (it.id == targetItem.id) it.copy(quantity = newQty) else it
+                                    if (isPaymentScreen && checkoutCustomerState != null) {
+                                        CheckoutScreen(
+                                            firstName = checkoutCustomerState!!.firstName,
+                                            lastName = checkoutCustomerState!!.lastName,
+                                            deliveryLocation = checkoutCustomerState!!.location,
+                                            cartItems = cartItems,
+                                            onBack = { isPaymentScreen = false },
+                                            onSubmitOrder = { airtelNumber ->
+                                                val timeStamp = SimpleDateFormat("yyyyMMddHHmmss", Locale.getDefault()).format(Date())
+                                                val orderId = "SS-$timeStamp"
+                                                val completed = CompletedOrder(
+                                                    orderId = orderId,
+                                                    firstName = checkoutCustomerState!!.firstName,
+                                                    lastName = checkoutCustomerState!!.lastName,
+                                                    phoneNumber = airtelNumber,
+                                                    deliveryLocation = checkoutCustomerState!!.location,
+                                                    items = cartItems
+                                                )
+                                                activeOrder = completed
+                                                cartItems = emptyList()
+                                                checkoutCustomerState = null
+                                                isPaymentScreen = false
+                                            }
+                                        )
+                                    } else if (checkoutCustomerState != null) {
+                                        CustomerInfoScreen(
+                                            onBack = { checkoutCustomerState = null },
+                                            onProceedToPayment = { fName, lName, loc ->
+                                                checkoutCustomerState = CheckoutCustomerState(fName, lName, loc)
+                                                isPaymentScreen = true
+                                            }
+                                        )
+                                    } else {
+                                        CartAndCheckoutScreen(
+                                            cartItems = cartItems,
+                                            onUpdateQuantity = { targetItem, newQty ->
+                                                cartItems = cartItems.map {
+                                                    if (it.id == targetItem.id) it.copy(quantity = newQty) else it
+                                                }
+                                            },
+                                            onRemoveItem = { targetItem ->
+                                                cartItems = cartItems.filterNot { it.id == targetItem.id }
+                                            },
+                                            onProceedToCustomerInfo = {
+                                                checkoutCustomerState = CheckoutCustomerState("", "", DELIVERY_LOCATIONS.first())
+                                            },
+                                            onContinueShopping = { currentDestination = NavDestination.CATALOG },
+                                            onBack = { currentDestination = NavDestination.CATALOG }
+                                        )
+                                    }
+                                }
+
+                                NavDestination.ADMIN_PANEL -> {
+                                    AdminPanelScreen(
+                                        categories = categoriesState,
+                                        onAddItem = { catId, newItem ->
+                                            categoriesState = categoriesState.map { cat ->
+                                                if (cat.id == catId) cat.copy(items = cat.items + newItem) else cat
                                             }
                                         },
-                                        onRemoveItem = { targetItem ->
-                                            cartItems = cartItems.filterNot { it.id == targetItem.id }
+                                        onDeleteItem = { itemId ->
+                                            categoriesState = categoriesState.map { cat ->
+                                                cat.copy(items = cat.items.filterNot { it.id == itemId })
+                                            }
                                         },
-                                        onProceedToCustomerInfo = { location ->
-                                            selectedLocationForCustomerInfo = location
-                                        },
-                                        onContinueShopping = { currentDestination = NavDestination.CATALOG },
                                         onBack = { currentDestination = NavDestination.CATALOG }
                                     )
                                 }

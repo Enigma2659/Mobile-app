@@ -1,5 +1,6 @@
 package com.example.shopsmart.ui
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -108,10 +109,28 @@ fun OrderSummaryScreen(
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = "Provide this Order ID upon delivery arrival at your physical location when announced.",
+                        text = "Provide this Order ID upon collection/delivery arrival at your physical location when announced.",
                         fontSize = 13.sp,
                         textAlign = TextAlign.Center,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)
+                    )
+                }
+            }
+
+            // Important Collection Notice (2 hours)
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.3f)
+                ),
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.error.copy(alpha = 0.5f))
+            ) {
+                Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Text(text = "⚠️ Important Collection Notice", fontWeight = FontWeight.Bold, fontSize = 15.sp, color = MaterialTheme.colorScheme.error)
+                    Text(
+                        text = "Ordered items must be collected within 2 hours after order time.",
+                        fontSize = 13.sp,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.85f)
                     )
                 }
             }
@@ -178,7 +197,7 @@ fun OrderSummaryScreen(
                     HorizontalDivider()
 
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                        Text("Total Paid", fontWeight = FontWeight.ExtraBold, fontSize = 16.sp)
+                        Text("Total Paid via CTech Airtel", fontWeight = FontWeight.ExtraBold, fontSize = 16.sp)
                         Text(
                             "MK${String.format(Locale.getDefault(), "%.2f", grandTotal)}",
                             fontWeight = FontWeight.ExtraBold,

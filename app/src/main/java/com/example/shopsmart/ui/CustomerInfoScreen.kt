@@ -4,7 +4,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -14,27 +13,23 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.shopsmart.model.DELIVERY_LOCATIONS
 import com.example.shopsmart.model.DeliveryLocation
 import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CustomerInfoScreen(
-    selectedLocation: DeliveryLocation,
-    itemsSubtotal: Double,
     onBack: () -> Unit,
-    onSubmitOrder: (firstName: String, lastName: String, phoneNumber: String) -> Unit
+    onProceedToPayment: (firstName: String, lastName: String, location: DeliveryLocation) -> Unit
 ) {
     var firstName by remember { mutableStateOf("") }
     var lastName by remember { mutableStateOf("") }
-    var phoneNumber by remember { mutableStateOf("") }
+    var locationExpanded by remember { mutableStateOf(false) }
+    var selectedLocation by remember { mutableStateOf(DELIVERY_LOCATIONS.first()) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
-
-    val deliveryFee = selectedLocation.deliveryFee
-    val grandTotal = itemsSubtotal + deliveryFee
 
     Scaffold(
         topBar = {
@@ -47,7 +42,7 @@ fun CustomerInfoScreen(
                             tint = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.padding(end = 8.dp)
                         )
-                        Text("Customer Information", fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                        Text("Step 2: Customer Details & Location", fontWeight = FontWeight.Bold, fontSize = 18.sp)
                     }
                 },
                 navigationIcon = {
@@ -74,72 +69,8 @@ fun CustomerInfoScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
-            // Order Summary Card
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
-                shape = RoundedCornerShape(12.dp)
-            ) {
-                Column(
-                    modifier = Modifier.padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Text(
-                        text = "Order Summary",
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 16.sp,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                    HorizontalDivider()
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Text("Delivery Location:", fontWeight = FontWeight.Medium)
-                        Text(
-                            text = selectedLocation.name,
-                            fontWeight = FontWeight.Bold,
-                            modifier = Modifier.weight(1f, fill = false)
-                        )
-                    }
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Text("Items Subtotal:")
-                        Text("MK${String.format(Locale.getDefault(), "%.2f", itemsSubtotal)}")
-                    }
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Text("Delivery Fee:")
-                        Text("MK${String.format(Locale.getDefault(), "%.2f", deliveryFee)}")
-                    }
-
-                    HorizontalDivider()
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Text("FINAL TOTAL:", fontWeight = FontWeight.ExtraBold, fontSize = 18.sp)
-                        Text(
-                            "MK${String.format(Locale.getDefault(), "%.2f", grandTotal)}",
-                            fontWeight = FontWeight.ExtraBold,
-                            fontSize = 20.sp,
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                    }
-                }
-            }
-
-            // Customer Details Form
             Text(
-                text = "Enter Your Details",
+                text = "Enter Customer Information",
                 fontWeight = FontWeight.Bold,
                 fontSize = 18.sp
             )
@@ -157,34 +88,68 @@ fun CustomerInfoScreen(
                         value = firstName,
                         onValueChange = { firstName = it },
                         label = { Text("First Name *") },
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = MaterialTheme.colorScheme.primary
-                        )
+                        modifier = Modifier.fillMaxWidth()
                     )
 
                     OutlinedTextField(
                         value = lastName,
                         onValueChange = { lastName = it },
                         label = { Text("Last Name *") },
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = MaterialTheme.colorScheme.primary
-                        )
+                        modifier = Modifier.fillMaxWidth()
                     )
+                }
+            }
 
-                    OutlinedTextField(
-                        value = phoneNumber,
-                        onValueChange = { phoneNumber = it.filter { char -> char.isDigit() } },
-                        label = { Text("Phone Number *") },
-                        placeholder = { Text("098XXXXXX / 089XXXXXX") },
-                        supportingText = { Text("Enter your contact/Airtel phone number") },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = MaterialTheme.colorScheme.primary
+            Text(
+                text = "Select Delivery Location",
+                fontWeight = FontWeight.Bold,
+                fontSize = 18.sp
+            )
+
+            ExposedDropdownMenuBox(
+                expanded = locationExpanded,
+                onExpandedChange = { locationExpanded = !locationExpanded },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                OutlinedTextField(
+                    value = selectedLocation.name,
+                    onValueChange = {},
+                    readOnly = true,
+                    label = { Text("Delivery Location *") },
+                    trailingIcon = {
+                        ExposedDropdownMenuDefaults.TrailingIcon(expanded = locationExpanded)
+                    },
+                    modifier = Modifier
+                        .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
+                        .fillMaxWidth()
+                )
+
+                ExposedDropdownMenu(
+                    expanded = locationExpanded,
+                    onDismissRequest = { locationExpanded = false }
+                ) {
+                    DELIVERY_LOCATIONS.forEach { location ->
+                        DropdownMenuItem(
+                            text = {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(text = location.name, fontWeight = FontWeight.Medium)
+                                    Text(
+                                        text = "MK${String.format(Locale.getDefault(), "%.0f", location.deliveryFee)}",
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.primary
+                                    )
+                                }
+                            },
+                            onClick = {
+                                selectedLocation = location
+                                locationExpanded = false
+                            }
                         )
-                    )
+                    }
                 }
             }
 
@@ -197,19 +162,14 @@ fun CustomerInfoScreen(
                 )
             }
 
-            // SUBMIT ORDER BUTTON
             Button(
                 onClick = {
                     if (firstName.isBlank() || lastName.isBlank()) {
-                        errorMessage = "Please input both First Name and Last Name."
-                        return@Button
-                    }
-                    if (phoneNumber.isBlank() || phoneNumber.length < 9) {
-                        errorMessage = "Please input a valid contact Phone Number."
+                        errorMessage = "Please enter both First Name and Last Name."
                         return@Button
                     }
                     errorMessage = null
-                    onSubmitOrder(firstName, lastName, phoneNumber)
+                    onProceedToPayment(firstName, lastName, selectedLocation)
                 },
                 modifier = Modifier
                     .fillMaxWidth()
@@ -220,7 +180,7 @@ fun CustomerInfoScreen(
                 )
             ) {
                 Text(
-                    text = "Confirm & Place Order (MK${String.format(Locale.getDefault(), "%.0f", grandTotal)})",
+                    text = "Go to Payment →",
                     fontWeight = FontWeight.Bold,
                     fontSize = 16.sp
                 )

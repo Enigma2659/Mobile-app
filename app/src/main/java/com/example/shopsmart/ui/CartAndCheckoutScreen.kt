@@ -1,6 +1,7 @@
 package com.example.shopsmart.ui
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -17,13 +18,14 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.shopsmart.model.CartItem
-import com.example.shopsmart.model.DELIVERY_LOCATIONS
-import com.example.shopsmart.model.DeliveryLocation
 import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -32,21 +34,14 @@ fun CartAndCheckoutScreen(
     cartItems: List<CartItem>,
     onUpdateQuantity: (CartItem, Int) -> Unit,
     onRemoveItem: (CartItem) -> Unit,
-    onProceedToCustomerInfo: (selectedLocation: DeliveryLocation) -> Unit,
+    onProceedToCustomerInfo: () -> Unit,
     onContinueShopping: () -> Unit,
     onBack: () -> Unit
 ) {
     var isAgreed by remember { mutableStateOf(false) }
-
-    // Dropdown combo box state for delivery location
-    var locationExpanded by remember { mutableStateOf(false) }
-    var selectedLocation by remember { mutableStateOf(DELIVERY_LOCATIONS.first()) }
-
     var errorMessage by remember { mutableStateOf<String?>(null) }
 
     val itemsSubtotal = cartItems.sumOf { it.totalPrice }
-    val deliveryFee = selectedLocation.deliveryFee
-    val grandTotal = itemsSubtotal + deliveryFee
 
     Scaffold(
         topBar = {
@@ -60,7 +55,7 @@ fun CartAndCheckoutScreen(
                             modifier = Modifier.padding(end = 8.dp)
                         )
                         Text(
-                            text = "My Cart & Delivery",
+                            text = "Step 1: Cart & Review",
                             fontWeight = FontWeight.Bold,
                             fontSize = 18.sp,
                             maxLines = 1,
@@ -127,9 +122,8 @@ fun CartAndCheckoutScreen(
                     .padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(20.dp)
             ) {
-                // SECTION 1: Cart Items Summary with + and - quantity buttons
                 Text(
-                    text = "1. Cart Summary",
+                    text = "Review Cart Items",
                     fontWeight = FontWeight.Bold,
                     fontSize = 18.sp
                 )
@@ -158,10 +152,22 @@ fun CartAndCheckoutScreen(
                                 ) {
                                     Row(
                                         modifier = Modifier.fillMaxWidth(),
-                                        horizontalArrangement = Arrangement.SpaceBetween,
-                                        verticalAlignment = Alignment.Top
+                                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                        verticalAlignment = Alignment.CenterVertically
                                     ) {
-                                        Column(modifier = Modifier.weight(1f)) {
+                                        Image(
+                                            painter = painterResource(id = getDrawableRes(cartItem.itemId, cartItem.selectedProcessor, cartItem.itemTitle)),
+                                            contentDescription = cartItem.itemTitle,
+                                            modifier = Modifier
+                                                .size(56.dp)
+                                                .clip(RoundedCornerShape(8.dp)),
+                                            contentScale = ContentScale.Crop
+                                        )
+
+                                        Column(
+                                            modifier = Modifier.weight(1f),
+                                            verticalArrangement = Arrangement.spacedBy(2.dp)
+                                        ) {
                                             Text(
                                                 text = cartItem.itemTitle,
                                                 fontWeight = FontWeight.Bold,
@@ -181,34 +187,50 @@ fun CartAndCheckoutScreen(
                                             )
                                         }
 
-                                        Text(
-                                            text = "MK${String.format(Locale.getDefault(), "%.2f", cartItem.totalPrice)}",
-                                            fontWeight = FontWeight.Bold,
-                                            fontSize = 16.sp,
-                                            color = MaterialTheme.colorScheme.primary
-                                        )
+                                        Column(
+                                            horizontalAlignment = Alignment.End,
+                                            verticalArrangement = Arrangement.spacedBy(4.dp)
+                                        ) {
+                                            IconButton(
+                                                onClick = { onRemoveItem(cartItem) },
+                                                modifier = Modifier.size(32.dp)
+                                            ) {
+                                                Icon(
+                                                    imageVector = Icons.Default.Delete,
+                                                    contentDescription = "Delete",
+                                                    tint = MaterialTheme.colorScheme.error
+                                                )
+                                            }
+
+                                            Text(
+                                                text = "MK${String.format(Locale.getDefault(), "%.2f", cartItem.totalPrice)}",
+                                                fontWeight = FontWeight.Bold,
+                                                fontSize = 15.sp,
+                                                color = MaterialTheme.colorScheme.primary
+                                            )
+                                        }
                                     }
 
                                     HorizontalDivider()
 
-                                    // Bottom row: Quantity controls + Prominent Recycle Bin at the very bottom
                                     Row(
                                         modifier = Modifier.fillMaxWidth(),
                                         horizontalArrangement = Arrangement.SpaceBetween,
                                         verticalAlignment = Alignment.CenterVertically
                                     ) {
+                                        Text(text = "Quantity:", fontSize = 13.sp, fontWeight = FontWeight.Medium)
+
                                         Row(
                                             verticalAlignment = Alignment.CenterVertically,
                                             horizontalArrangement = Arrangement.spacedBy(2.dp)
                                         ) {
-                                            Text(text = "Qty:", fontSize = 13.sp, fontWeight = FontWeight.Medium)
                                             IconButton(
                                                 onClick = {
                                                     if (cartItem.quantity > 1) {
                                                         onUpdateQuantity(cartItem, cartItem.quantity - 1)
                                                     }
                                                 },
-                                                modifier = Modifier.size(32.dp)
+                                                modifier = Modifier.size(30.dp)
                                             ) {
                                                 Icon(
                                                     imageVector = Icons.Default.Remove,
@@ -225,7 +247,7 @@ fun CartAndCheckoutScreen(
 
                                             IconButton(
                                                 onClick = { onUpdateQuantity(cartItem, cartItem.quantity + 1) },
-                                                modifier = Modifier.size(32.dp)
+                                                modifier = Modifier.size(30.dp)
                                             ) {
                                                 Icon(
                                                     imageVector = Icons.Default.Add,
@@ -233,38 +255,12 @@ fun CartAndCheckoutScreen(
                                                 )
                                             }
                                         }
-
-                                        // Prominent Recycle Bin / Delete button at the very bottom of the item card
-                                        OutlinedButton(
-                                            onClick = { onRemoveItem(cartItem) },
-                                            colors = ButtonDefaults.outlinedButtonColors(
-                                                contentColor = MaterialTheme.colorScheme.error,
-                                                containerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.2f)
-                                            ),
-                                            border = BorderStroke(1.dp, MaterialTheme.colorScheme.error),
-                                            contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
-                                            modifier = Modifier.height(34.dp)
-                                        ) {
-                                            Icon(
-                                                imageVector = Icons.Default.Delete,
-                                                contentDescription = "Recycle Bin",
-                                                modifier = Modifier.size(16.dp),
-                                                tint = MaterialTheme.colorScheme.error
-                                            )
-                                            Spacer(modifier = Modifier.width(4.dp))
-                                            Text(
-                                            text = "Delete",
-                                                fontSize = 11.sp,
-                                                fontWeight = FontWeight.Bold,
-                                                color = MaterialTheme.colorScheme.error
-                                            )
-                                        }
                                     }
                                 }
                             }
 
                             if (index < cartItems.lastIndex) {
-                                Spacer(modifier = Modifier.height(10.dp))
+                                Spacer(modifier = Modifier.height(8.dp))
                             }
                         }
 
@@ -274,11 +270,12 @@ fun CartAndCheckoutScreen(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            Text("Items Subtotal:", fontWeight = FontWeight.SemiBold)
+                            Text("Subtotal:", fontWeight = FontWeight.SemiBold)
                             Text(
                                 "MK${String.format(Locale.getDefault(), "%.2f", itemsSubtotal)}",
                                 fontWeight = FontWeight.Bold,
-                                fontSize = 16.sp
+                                fontSize = 16.sp,
+                                color = MaterialTheme.colorScheme.primary
                             )
                         }
                     }
@@ -314,112 +311,6 @@ fun CartAndCheckoutScreen(
                     }
                 }
 
-                // SECTION 2: Select Delivery Location (word "Combo Box" removed as requested!)
-                Text(
-                    text = "2. Select Delivery Location",
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 18.sp
-                )
-
-                ExposedDropdownMenuBox(
-                    expanded = locationExpanded,
-                    onExpandedChange = { locationExpanded = !locationExpanded },
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    // Closed text field value showing ONLY location name (no price/distance indicated next to it as requested!)
-                    OutlinedTextField(
-                        value = selectedLocation.name,
-                        onValueChange = {},
-                        readOnly = true,
-                        label = { Text("Choose Delivery Location") },
-                        trailingIcon = {
-                            ExposedDropdownMenuDefaults.TrailingIcon(expanded = locationExpanded)
-                        },
-                        colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(
-                            focusedBorderColor = MaterialTheme.colorScheme.primary
-                        ),
-                        modifier = Modifier
-                            .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
-                            .fillMaxWidth()
-                    )
-
-                    ExposedDropdownMenu(
-                        expanded = locationExpanded,
-                        onDismissRequest = { locationExpanded = false }
-                    ) {
-                        DELIVERY_LOCATIONS.forEach { location ->
-                            DropdownMenuItem(
-                                text = {
-                                    Row(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        horizontalArrangement = Arrangement.SpaceBetween,
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
-                                        Text(
-                                            text = location.name,
-                                            fontWeight = FontWeight.Medium,
-                                            modifier = Modifier.weight(1f)
-                                        )
-                                        Text(
-                                            text = "${location.distanceKm.toInt()} km (MK${String.format(Locale.getDefault(), "%.0f", location.deliveryFee)})",
-                                            fontWeight = FontWeight.Bold,
-                                            color = MaterialTheme.colorScheme.primary,
-                                            fontSize = 13.sp
-                                        )
-                                    }
-                                },
-                                onClick = {
-                                    selectedLocation = location
-                                    locationExpanded = false
-                                }
-                            )
-                        }
-                    }
-                }
-
-                // SECTION 3: Updated Total according to Delivery Fee (K1000 per km)
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
-                    shape = RoundedCornerShape(12.dp)
-                ) {
-                    Column(
-                        modifier = Modifier.padding(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Text("Items Subtotal:")
-                            Text("MK${String.format(Locale.getDefault(), "%.2f", itemsSubtotal)}")
-                        }
-
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Text("Delivery Fee:")
-                            Text("MK${String.format(Locale.getDefault(), "%.2f", deliveryFee)}")
-                        }
-
-                        HorizontalDivider()
-
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Text("ESTIMATED TOTAL:", fontWeight = FontWeight.ExtraBold, fontSize = 18.sp)
-                            Text(
-                                "MK${String.format(Locale.getDefault(), "%.2f", grandTotal)}",
-                                fontWeight = FontWeight.ExtraBold,
-                                fontSize = 20.sp,
-                                color = MaterialTheme.colorScheme.primary
-                            )
-                        }
-                    }
-                }
-
                 if (errorMessage != null) {
                     Text(
                         text = errorMessage!!,
@@ -429,7 +320,6 @@ fun CartAndCheckoutScreen(
                     )
                 }
 
-                // PROCEED TO CUSTOMER INFO BUTTON
                 Button(
                     onClick = {
                         if (!isAgreed) {
@@ -437,7 +327,7 @@ fun CartAndCheckoutScreen(
                             return@Button
                         }
                         errorMessage = null
-                        onProceedToCustomerInfo(selectedLocation)
+                        onProceedToCustomerInfo()
                     },
                     modifier = Modifier
                         .fillMaxWidth()
@@ -448,7 +338,7 @@ fun CartAndCheckoutScreen(
                     )
                 ) {
                     Text(
-                        text = "Proceed to Customer Details →",
+                        text = "Go to Customer Details →",
                         fontWeight = FontWeight.Bold,
                         fontSize = 16.sp
                     )
