@@ -22,6 +22,8 @@ data class ShopItem(
     val weightsOrSizes: List<String>,
     val basePrice: Double,
     val description: String = "",
+    val imageUrl: String = "",
+    val availableCities: List<String> = listOf("Lilongwe", "Blantyre", "Zomba"),
     val priceTable: Map<Pair<String, String>, Double> = emptyMap()
 ) {
     fun getPrice(processor: String, weight: String): Double {
@@ -61,10 +63,48 @@ data class DeliveryLocation(
     val deliveryFee: Double
 )
 
+data class User(
+    val id: String = UUID.randomUUID().toString(),
+    val firstName: String,
+    val lastName: String,
+    val username: String,
+    val password: String,
+    val phoneNumber: String,
+    val email: String,
+    val city: String,
+    val deliveryLocationName: String = "Biwi",
+    val category: String = "Students",
+    val profileImageUrl: String = ""
+)
+
+fun calculateDeliveryFee(distanceKm: Double): Double {
+    return (distanceKm / 6.0) * 0.20
+}
+
+val CITIES_DELIVERY_LOCATIONS = mapOf(
+    "Lilongwe" to listOf(
+        DeliveryLocation("ll_biwi", "Biwi", 3.0, calculateDeliveryFee(3.0)),
+        DeliveryLocation("ll_chipasula", "Chipasula", 6.0, calculateDeliveryFee(6.0)),
+        DeliveryLocation("ll_likuni", "Likuni", 12.0, calculateDeliveryFee(12.0)),
+        DeliveryLocation("ll_area25", "Area 25", 15.0, calculateDeliveryFee(15.0))
+    ),
+    "Blantyre" to listOf(
+        DeliveryLocation("bt_vic", "Victoria Pharmacy", 4.0, calculateDeliveryFee(4.0)),
+        DeliveryLocation("bt_mubas", "MUBAS", 8.0, calculateDeliveryFee(8.0)),
+        DeliveryLocation("bt_ndirande", "Ndirande", 11.0, calculateDeliveryFee(11.0))
+    ),
+    "Zomba" to listOf(
+        DeliveryLocation("zb_mponda", "Mponda Primary School", 3.0, calculateDeliveryFee(3.0)),
+        DeliveryLocation("zb_unima", "UNIMA Campus", 6.0, calculateDeliveryFee(6.0)),
+        DeliveryLocation("zb_matawale", "Zomba Matawale", 9.0, calculateDeliveryFee(9.0)),
+        DeliveryLocation("zb_chirunga", "Chirunga", 14.0, calculateDeliveryFee(14.0))
+    )
+)
+
 val DELIVERY_LOCATIONS = listOf(
-    DeliveryLocation("loc_1", "Mponda Primary School", 2.0, 2000.0),
-    DeliveryLocation("loc_2", "UNIMA Campus", 6.0, 6000.0),
-    DeliveryLocation("loc_3", "Zomba Matawale", 4.0, 4000.0)
+    DeliveryLocation("loc_1", "Mponda Primary School", 3.0, calculateDeliveryFee(3.0)),
+    DeliveryLocation("loc_2", "UNIMA Campus", 6.0, calculateDeliveryFee(6.0)),
+    DeliveryLocation("loc_3", "Zomba Matawale", 9.0, calculateDeliveryFee(9.0))
 )
 
 val PROMOTIONS_LIST = listOf(
@@ -73,8 +113,8 @@ val PROMOTIONS_LIST = listOf(
         name = "Illovo Sugar Super Pack (10kg)",
         category = "Pantry Staples",
         description = "Special discount on Illovo Sugar for home and office tea time!",
-        initialPrice = 19500.0,
-        newPrice = 17500.0,
+        initialPrice = 115.0,
+        newPrice = 90.0,
         selectedProcessor = "Illovo",
         selectedWeight = "5kg"
     ),
@@ -83,8 +123,8 @@ val PROMOTIONS_LIST = listOf(
         name = "Kukoma Cooking Oil (5 Litre)",
         category = "Cooking Essentials",
         description = "Pure vegetable cooking oil mega saver deal.",
-        initialPrice = 16500.0,
-        newPrice = 14200.0,
+        initialPrice = 110.0,
+        newPrice = 85.0,
         selectedProcessor = "Kukoma",
         selectedWeight = "5litre"
     ),
@@ -93,8 +133,8 @@ val PROMOTIONS_LIST = listOf(
         name = "Kilombero Premium Rice (10kg)",
         category = "Pantry Staples",
         description = "Long grain aromatic Kilombero rice at reduced promotional price.",
-        initialPrice = 18000.0,
-        newPrice = 15500.0,
+        initialPrice = 105.0,
+        newPrice = 80.0,
         selectedProcessor = "Kilombero",
         selectedWeight = "10kg"
     )
@@ -111,13 +151,13 @@ val SHOP_CATEGORIES = listOf(
                 categoryId = 1,
                 processors = listOf("Kilombero", "Pishori"),
                 weightsOrSizes = listOf("10kg", "50kg"),
-                basePrice = 16500.0,
+                basePrice = 85.0,
                 description = "High quality aromatic rice for households & offices.",
                 priceTable = mapOf(
-                    Pair("Kilombero", "10kg") to 16500.0,
-                    Pair("Kilombero", "50kg") to 75000.0,
-                    Pair("Pishori", "10kg") to 19500.0,
-                    Pair("Pishori", "50kg") to 88000.0
+                    Pair("Kilombero", "10kg") to 85.0,
+                    Pair("Kilombero", "50kg") to 120.0,
+                    Pair("Pishori", "10kg") to 95.0,
+                    Pair("Pishori", "50kg") to 120.0
                 )
             ),
             ShopItem(
@@ -126,27 +166,27 @@ val SHOP_CATEGORIES = listOf(
                 categoryId = 1,
                 processors = listOf("A1", "Rab Processors"),
                 weightsOrSizes = listOf("10kg", "50kg"),
-                basePrice = 8200.0,
+                basePrice = 50.0,
                 description = "Fine ground flour for baking and staple meal prep.",
                 priceTable = mapOf(
-                    Pair("A1", "10kg") to 8200.0,
-                    Pair("A1", "50kg") to 38000.0,
-                    Pair("Rab Processors", "10kg") to 7800.0,
-                    Pair("Rab Processors", "50kg") to 36000.0
+                    Pair("A1", "10kg") to 50.0,
+                    Pair("A1", "50kg") to 90.0,
+                    Pair("Rab Processors", "10kg") to 48.0,
+                    Pair("Rab Processors", "50kg") to 88.0
                 )
             ),
             ShopItem(
                 id = "sugar",
-                name = "Refined illovo Sugar",
+                name = "Refined Illovo Sugar",
                 categoryId = 1,
-                processors = listOf("Brown"),
+                processors = listOf("Illovo"),
                 weightsOrSizes = listOf("1kg", "2kg", "5kg"),
-                basePrice = 1950.0,
+                basePrice = 45.0,
                 description = "Pure sweet refined sugar.",
                 priceTable = mapOf(
-                    Pair("Illovo", "1kg") to 2000.0,
-                    Pair("Illovo", "2kg") to 3900.0,
-                    Pair("Illovo", "5kg") to 9500.0
+                    Pair("Illovo", "1kg") to 45.0,
+                    Pair("Illovo", "2kg") to 75.0,
+                    Pair("Illovo", "5kg") to 110.0
                 )
             )
         )
@@ -161,15 +201,15 @@ val SHOP_CATEGORIES = listOf(
                 categoryId = 2,
                 processors = listOf("Kukoma", "Soyalite"),
                 weightsOrSizes = listOf("1litre", "2litre", "5litre"),
-                basePrice = 3200.0,
+                basePrice = 55.0,
                 description = "Double refined clear vegetable cooking oil.",
                 priceTable = mapOf(
-                    Pair("Kukoma", "1litre") to 3200.0,
-                    Pair("Kukoma", "2litre") to 6400.0,
-                    Pair("Kukoma", "5litre") to 15500.0,
-                    Pair("Soyalite", "1litre") to 3000.0,
-                    Pair("Soyalite", "2litre") to 6000.0,
-                    Pair("Soyalite", "5litre") to 14800.0
+                    Pair("Kukoma", "1litre") to 55.0,
+                    Pair("Kukoma", "2litre") to 85.0,
+                    Pair("Kukoma", "5litre") to 115.0,
+                    Pair("Soyalite", "1litre") to 50.0,
+                    Pair("Soyalite", "2litre") to 80.0,
+                    Pair("Soyalite", "5litre") to 110.0
                 )
             )
         )
@@ -182,15 +222,15 @@ val SHOP_CATEGORIES = listOf(
                 id = "toothpaste",
                 name = "Colgate Herbal Toothpaste",
                 categoryId = 3,
-                processors = listOf("Charcoal", "herbal"),
+                processors = listOf("Charcoal", "Colgate"),
                 weightsOrSizes = listOf("100ml", "200ml"),
-                basePrice = 1400.0,
+                basePrice = 45.0,
                 description = "Maximum cavity protection toothpaste.",
                 priceTable = mapOf(
-                    Pair("Charcoal", "100ml") to 1500.0,
-                    Pair("Charcoal", "200ml") to 2800.0,
-                    Pair("Colgate", "100ml") to 1400.0,
-                    Pair("Colgate", "200ml") to 2600.0
+                    Pair("Charcoal", "100ml") to 50.0,
+                    Pair("Charcoal", "200ml") to 80.0,
+                    Pair("Colgate", "100ml") to 45.0,
+                    Pair("Colgate", "200ml") to 75.0
                 )
             )
         )
@@ -209,7 +249,7 @@ val SHOP_CATEGORIES = listOf(
                 description = "Ready-to-cook savory sausage packs.",
                 priceTable = mapOf(
                     Pair("Beef Sausages", "400g") to 50.0,
-                    Pair("Beef Sausages", "700g") to 65.0
+                    Pair("Beef Sausages", "700g") to 80.0
                 )
             ),
             ShopItem(
@@ -218,15 +258,15 @@ val SHOP_CATEGORIES = listOf(
                 categoryId = 4,
                 processors = listOf("Full Chicken", "Liver", "Wings"),
                 weightsOrSizes = listOf("1kg", "2kg"),
-                basePrice = 60.0,
+                basePrice = 65.0,
                 description = "Hygienically dressed chicken portions.",
                 priceTable = mapOf(
-                    Pair("Full Chicken", "1kg") to 60.0,
-                    Pair("Full Chicken", "2kg") to 80.0,
-                    Pair("Liver", "1kg") to 55.0,
+                    Pair("Full Chicken", "1kg") to 65.0,
+                    Pair("Full Chicken", "2kg") to 110.0,
+                    Pair("Liver", "1kg") to 45.0,
                     Pair("Liver", "2kg") to 75.0,
-                    Pair("Wings", "1kg") to 58.0,
-                    Pair("Wings", "2kg") to 78.0
+                    Pair("Wings", "1kg") to 55.0,
+                    Pair("Wings", "2kg") to 95.0
                 )
             )
         )
@@ -246,22 +286,37 @@ fun generateSmartBudgetPlan(
 
     when (persona) {
         UserPersona.OFFICES -> {
+            // Offices (5 members): prioritize sugar, rice pishori, cooking oil 5 litres, beef sausage
             val officeSugar = CartItem(
                 itemTitle = "Refined White Sugar (Illovo 5kg)",
                 selectedProcessor = "Illovo",
                 selectedWeight = "5kg",
-                quantity = 1,
+                quantity = groupCount.coerceAtLeast(1),
                 unitPrice = 9500.0
             )
-            val officeRice = CartItem(
-                itemTitle = "Kilombero Rice (10kg)",
-                selectedProcessor = "Kilombero",
+            val officePishoriRice = CartItem(
+                itemTitle = "Pishori Rice (10kg)",
+                selectedProcessor = "Pishori",
                 selectedWeight = "10kg",
+                quantity = groupCount.coerceAtLeast(1),
+                unitPrice = 19500.0
+            )
+            val officeCookingOil = CartItem(
+                itemTitle = "Pure Cooking Oil (Kukoma 5L)",
+                selectedProcessor = "Kukoma",
+                selectedWeight = "5litre",
                 quantity = 1,
-                unitPrice = 16500.0
+                unitPrice = 15500.0
+            )
+            val officeBeefSausage = CartItem(
+                itemTitle = "Fresh Beef Sausages (700g)",
+                selectedProcessor = "Beef Sausages",
+                selectedWeight = "700g",
+                quantity = groupCount.coerceAtLeast(1),
+                unitPrice = 65.0
             )
 
-            for (item in listOf(officeSugar, officeRice)) {
+            for (item in listOf(officeSugar, officePishoriRice, officeCookingOil, officeBeefSausage)) {
                 if (item.totalPrice <= remainingBudget) {
                     recommendedList.add(item)
                     remainingBudget -= item.totalPrice
@@ -269,19 +324,20 @@ fun generateSmartBudgetPlan(
             }
         }
         UserPersona.STUDENTS -> {
-            val studentFlour = CartItem(
-                itemTitle = "Maize / Wheat Flour (10kg)",
-                selectedProcessor = "A1",
-                selectedWeight = "10kg",
-                quantity = 1,
-                unitPrice = 8200.0
-            )
+            // Students (1 student): rice 10kg, flour 10kg, sugar, cooking oil 1litre, liver
             val studentRice = CartItem(
                 itemTitle = "Kilombero Rice (10kg)",
                 selectedProcessor = "Kilombero",
                 selectedWeight = "10kg",
                 quantity = 1,
                 unitPrice = 16500.0
+            )
+            val studentFlour = CartItem(
+                itemTitle = "Maize / Wheat Flour (A1 10kg)",
+                selectedProcessor = "A1",
+                selectedWeight = "10kg",
+                quantity = 1,
+                unitPrice = 8200.0
             )
             val studentSugar = CartItem(
                 itemTitle = "Refined White Sugar (1kg)",
@@ -290,15 +346,22 @@ fun generateSmartBudgetPlan(
                 quantity = 1,
                 unitPrice = 2000.0
             )
-            val studentOil = CartItem(
+            val studentCookingOil = CartItem(
                 itemTitle = "Pure Cooking Oil (Kukoma 1L)",
                 selectedProcessor = "Kukoma",
                 selectedWeight = "1litre",
                 quantity = 1,
                 unitPrice = 3200.0
             )
+            val studentLiver = CartItem(
+                itemTitle = "Chicken Liver (1kg)",
+                selectedProcessor = "Liver",
+                selectedWeight = "1kg",
+                quantity = 1,
+                unitPrice = 55.0
+            )
 
-            for (item in listOf(studentFlour, studentRice, studentSugar, studentOil)) {
+            for (item in listOf(studentRice, studentFlour, studentSugar, studentCookingOil, studentLiver)) {
                 if (item.totalPrice <= remainingBudget) {
                     recommendedList.add(item)
                     remainingBudget -= item.totalPrice
@@ -306,36 +369,58 @@ fun generateSmartBudgetPlan(
             }
         }
         UserPersona.FAMILIES -> {
-            val familyFlour = CartItem(
-                itemTitle = "Maize / Wheat Flour (10kg)",
-                selectedProcessor = "A1",
-                selectedWeight = "10kg",
-                quantity = 1,
-                unitPrice = 8200.0
-            )
+            // Families (3 members): same as offices plus rice, full chicken, colgate herbal, flour, 2 litre cooking oil, sugar, beef sausage
             val familyRice = CartItem(
                 itemTitle = "Kilombero Rice (10kg)",
                 selectedProcessor = "Kilombero",
                 selectedWeight = "10kg",
-                quantity = 1,
+                quantity = groupCount.coerceAtLeast(1),
                 unitPrice = 16500.0
             )
-            val familySugar = CartItem(
-                itemTitle = "Refined White Sugar (2kg)",
-                selectedProcessor = "Illovo",
+            val familyFullChicken = CartItem(
+                itemTitle = "Fresh Full Chicken (2kg)",
+                selectedProcessor = "Full Chicken",
                 selectedWeight = "2kg",
                 quantity = 1,
-                unitPrice = 3900.0
+                unitPrice = 80.0
             )
-            val familyOil = CartItem(
+            val familyColgate = CartItem(
+                itemTitle = "Colgate Herbal Toothpaste (100ml)",
+                selectedProcessor = "Colgate",
+                selectedWeight = "100ml",
+                quantity = 1,
+                unitPrice = 1400.0
+            )
+            val familyFlour = CartItem(
+                itemTitle = "Maize / Wheat Flour (A1 10kg)",
+                selectedProcessor = "A1",
+                selectedWeight = "10kg",
+                quantity = groupCount.coerceAtLeast(1),
+                unitPrice = 8200.0
+            )
+            val familyCookingOil2L = CartItem(
                 itemTitle = "Pure Cooking Oil (Kukoma 2L)",
                 selectedProcessor = "Kukoma",
                 selectedWeight = "2litre",
                 quantity = 1,
                 unitPrice = 6400.0
             )
+            val familySugar2Kg = CartItem(
+                itemTitle = "Refined White Sugar (2kg)",
+                selectedProcessor = "Illovo",
+                selectedWeight = "2kg",
+                quantity = groupCount.coerceAtLeast(1),
+                unitPrice = 3900.0
+            )
+            val familyBeefSausage = CartItem(
+                itemTitle = "Fresh Beef Sausages (700g)",
+                selectedProcessor = "Beef Sausages",
+                selectedWeight = "700g",
+                quantity = 1,
+                unitPrice = 65.0
+            )
 
-            for (item in listOf(familyFlour, familyRice, familySugar, familyOil)) {
+            for (item in listOf(familyRice, familyFullChicken, familyColgate, familyFlour, familyCookingOil2L, familySugar2Kg, familyBeefSausage)) {
                 if (item.totalPrice <= remainingBudget) {
                     recommendedList.add(item)
                     remainingBudget -= item.totalPrice

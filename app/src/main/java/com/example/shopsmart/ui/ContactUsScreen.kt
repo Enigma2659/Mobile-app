@@ -149,7 +149,7 @@ fun ContactUsScreen(onBack: () -> Unit = {}) {
                     }
                     HorizontalDivider()
                     Text(
-                        text = "Shop Smart Headquarters, Near Victoria Pharmaceutical / UNIMA Junction, Zomba, Malawi",
+                        text = "Shop Simple Headquarters, Near Victoria Pharmaceutical / UNIMA Junction, Zomba, Malawi",
                         fontSize = 14.sp,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)
                     )

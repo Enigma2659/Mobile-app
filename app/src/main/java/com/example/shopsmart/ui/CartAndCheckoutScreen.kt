@@ -152,21 +152,22 @@ fun CartAndCheckoutScreen(
                                 ) {
                                     Row(
                                         modifier = Modifier.fillMaxWidth(),
-                                        horizontalArrangement = Arrangement.spacedBy(10.dp),
-                                        verticalAlignment = Alignment.CenterVertically
+                                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                        verticalAlignment = Alignment.Top
                                     ) {
                                         Image(
                                             painter = painterResource(id = getDrawableRes(cartItem.itemId, cartItem.selectedProcessor, cartItem.itemTitle)),
                                             contentDescription = cartItem.itemTitle,
                                             modifier = Modifier
-                                                .size(56.dp)
+                                                .size(60.dp)
                                                 .clip(RoundedCornerShape(8.dp)),
                                             contentScale = ContentScale.Crop
                                         )
 
                                         Column(
                                             modifier = Modifier.weight(1f),
-                                            verticalArrangement = Arrangement.spacedBy(2.dp)
+                                            horizontalAlignment = Alignment.CenterHorizontally,
+                                            verticalArrangement = Arrangement.spacedBy(4.dp)
                                         ) {
                                             Text(
                                                 text = cartItem.itemTitle,
@@ -177,31 +178,10 @@ fun CartAndCheckoutScreen(
                                             )
                                             Text(
                                                 text = "${cartItem.selectedProcessor} | ${cartItem.selectedWeight}",
-                                                fontSize = 12.sp,
-                                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                                                fontSize = 13.sp,
+                                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+                                                fontWeight = FontWeight.Medium
                                             )
-                                            Text(
-                                                text = "MK${String.format(Locale.getDefault(), "%.2f", cartItem.unitPrice)} each",
-                                                fontSize = 12.sp,
-                                                color = MaterialTheme.colorScheme.primary
-                                            )
-                                        }
-
-                                        Column(
-                                            horizontalAlignment = Alignment.End,
-                                            verticalArrangement = Arrangement.spacedBy(4.dp)
-                                        ) {
-                                            IconButton(
-                                                onClick = { onRemoveItem(cartItem) },
-                                                modifier = Modifier.size(32.dp)
-                                            ) {
-                                                Icon(
-                                                    imageVector = Icons.Default.Delete,
-                                                    contentDescription = "Delete",
-                                                    tint = MaterialTheme.colorScheme.error
-                                                )
-                                            }
-
                                             Text(
                                                 text = "MK${String.format(Locale.getDefault(), "%.2f", cartItem.totalPrice)}",
                                                 fontWeight = FontWeight.Bold,
@@ -211,26 +191,25 @@ fun CartAndCheckoutScreen(
                                         }
                                     }
 
-                                    HorizontalDivider()
+                                    HorizontalDivider(modifier = Modifier.padding(vertical = 2.dp))
 
                                     Row(
                                         modifier = Modifier.fillMaxWidth(),
                                         horizontalArrangement = Arrangement.SpaceBetween,
                                         verticalAlignment = Alignment.CenterVertically
                                     ) {
-                                        Text(text = "Quantity:", fontSize = 13.sp, fontWeight = FontWeight.Medium)
-
                                         Row(
                                             verticalAlignment = Alignment.CenterVertically,
                                             horizontalArrangement = Arrangement.spacedBy(2.dp)
                                         ) {
+                                            Text(text = "Qty:", fontSize = 13.sp, fontWeight = FontWeight.Medium)
                                             IconButton(
                                                 onClick = {
                                                     if (cartItem.quantity > 1) {
                                                         onUpdateQuantity(cartItem, cartItem.quantity - 1)
                                                     }
                                                 },
-                                                modifier = Modifier.size(30.dp)
+                                                modifier = Modifier.size(32.dp)
                                             ) {
                                                 Icon(
                                                     imageVector = Icons.Default.Remove,
@@ -247,13 +226,24 @@ fun CartAndCheckoutScreen(
 
                                             IconButton(
                                                 onClick = { onUpdateQuantity(cartItem, cartItem.quantity + 1) },
-                                                modifier = Modifier.size(30.dp)
+                                                modifier = Modifier.size(32.dp)
                                             ) {
                                                 Icon(
                                                     imageVector = Icons.Default.Add,
                                                     contentDescription = "Increase"
                                                 )
                                             }
+                                        }
+
+                                        IconButton(
+                                            onClick = { onRemoveItem(cartItem) },
+                                            modifier = Modifier.size(36.dp)
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Default.Delete,
+                                                contentDescription = "Delete",
+                                                tint = MaterialTheme.colorScheme.error
+                                            )
                                         }
                                     }
                                 }

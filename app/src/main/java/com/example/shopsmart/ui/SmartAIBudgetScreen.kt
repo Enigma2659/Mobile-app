@@ -163,6 +163,11 @@ fun SmartAIBudgetScreen(
                             )
                             .clickable {
                                 selectedPersona = persona
+                                groupCount = when (persona) {
+                                    UserPersona.OFFICES -> 5
+                                    UserPersona.FAMILIES -> 3
+                                    UserPersona.STUDENTS -> 1
+                                }
                                 generatedPlan = null
                                 bundleAdded = false
                             }
@@ -190,6 +195,11 @@ fun SmartAIBudgetScreen(
                                 selected = isSelected,
                                 onClick = {
                                     selectedPersona = persona
+                                    groupCount = when (persona) {
+                                        UserPersona.OFFICES -> 5
+                                        UserPersona.FAMILIES -> 3
+                                        UserPersona.STUDENTS -> 1
+                                    }
                                     generatedPlan = null
                                     bundleAdded = false
                                 }
@@ -210,12 +220,11 @@ fun SmartAIBudgetScreen(
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Row(
+                Column(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(16.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     Column {
                         Text(text = "People / Group Size", fontWeight = FontWeight.Medium)
@@ -227,8 +236,9 @@ fun SmartAIBudgetScreen(
                     }
 
                     Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.Center,
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
                         IconButton(
                             onClick = {
@@ -239,7 +249,7 @@ fun SmartAIBudgetScreen(
                                 }
                             },
                             modifier = Modifier
-                                .size(36.dp)
+                                .size(42.dp)
                                 .background(MaterialTheme.colorScheme.primaryContainer, shape = RoundedCornerShape(8.dp))
                         ) {
                             Icon(Icons.Default.Remove, contentDescription = "Decrease")
@@ -248,8 +258,8 @@ fun SmartAIBudgetScreen(
                         Text(
                             text = groupCount.toString(),
                             fontWeight = FontWeight.Bold,
-                            fontSize = 18.sp,
-                            modifier = Modifier.padding(horizontal = 8.dp)
+                            fontSize = 22.sp,
+                            modifier = Modifier.padding(horizontal = 24.dp)
                         )
 
                         IconButton(
@@ -259,7 +269,7 @@ fun SmartAIBudgetScreen(
                                 bundleAdded = false
                             },
                             modifier = Modifier
-                                .size(36.dp)
+                                .size(42.dp)
                                 .background(MaterialTheme.colorScheme.primaryContainer, shape = RoundedCornerShape(8.dp))
                         ) {
                             Icon(Icons.Default.Add, contentDescription = "Increase")

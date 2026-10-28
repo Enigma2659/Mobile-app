@@ -27,6 +27,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
 import com.example.shopsmart.R
 import com.example.shopsmart.model.CartItem
 import com.example.shopsmart.model.Category
@@ -360,6 +361,7 @@ fun CatalogItemRow(
                 itemId = shopItem.id,
                 processors = shopItem.processors,
                 selectedProcessor = selectedProcessor,
+                imageUrl = shopItem.imageUrl,
                 onSelectProcessor = { selectedProcessor = it }
             )
         }
@@ -498,6 +500,7 @@ fun BrandTypeGlassSelector(
     itemId: String,
     processors: List<String>,
     selectedProcessor: String,
+    imageUrl: String = "",
     onSelectProcessor: (String) -> Unit
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -541,15 +544,27 @@ fun BrandTypeGlassSelector(
                         verticalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
                         // Picture 1.35 inch wide (97 dp) and height 1.68 inch (121 dp)
-                        Image(
-                            painter = painterResource(id = drawableRes),
-                            contentDescription = processor,
-                            modifier = Modifier
-                                .width(97.dp)
-                                .height(121.dp)
-                                .clip(RoundedCornerShape(8.dp)),
-                            contentScale = ContentScale.Crop
-                        )
+                        if (imageUrl.isNotBlank()) {
+                            AsyncImage(
+                                model = imageUrl,
+                                contentDescription = processor,
+                                modifier = Modifier
+                                    .width(97.dp)
+                                    .height(121.dp)
+                                    .clip(RoundedCornerShape(8.dp)),
+                                contentScale = ContentScale.Crop
+                            )
+                        } else {
+                            Image(
+                                painter = painterResource(id = drawableRes),
+                                contentDescription = processor,
+                                modifier = Modifier
+                                    .width(97.dp)
+                                    .height(121.dp)
+                                    .clip(RoundedCornerShape(8.dp)),
+                                contentScale = ContentScale.Crop
+                            )
+                        }
 
                         // Glass option button inside captioned with their name
                         Surface(

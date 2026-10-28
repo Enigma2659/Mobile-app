@@ -45,8 +45,8 @@ class ShopCalculationsTest {
     fun testDeliveryLocations() {
         assertEquals(3, DELIVERY_LOCATIONS.size)
         val firstLocation = DELIVERY_LOCATIONS.first()
-        assertEquals(2000.0, firstLocation.deliveryFee, 0.001)
-        assertEquals(2.0, firstLocation.distanceKm, 0.001)
+        assertEquals(0.10, firstLocation.deliveryFee, 0.001)
+        assertEquals(3.0, firstLocation.distanceKm, 0.001)
     }
 
     @Test
@@ -59,5 +59,22 @@ class ShopCalculationsTest {
         assertTrue(budgetPlan.isNotEmpty())
         val totalPlanCost = budgetPlan.sumOf { it.totalPrice }
         assertTrue(totalPlanCost <= 30000.0)
+    }
+
+    @Test
+    fun testUsernameGeneration() {
+        val firstName = "Bridget"
+        val lastName = "Sanudi"
+        val firstInitial = firstName.trim().firstOrNull()?.uppercase() ?: ""
+        val surname = lastName.trim().replace(" ", "")
+        val generatedUsername = "$firstInitial$surname"
+        assertEquals("BSanudi", generatedUsername)
+    }
+
+    @Test
+    fun testDeliveryFeePerKilometer() {
+        val distanceKm = 6.0
+        val deliveryFee = (distanceKm / 6.0) * 0.20
+        assertEquals(0.20, deliveryFee, 0.001)
     }
 }

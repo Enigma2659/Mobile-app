@@ -45,7 +45,7 @@ private val DarkColorScheme = darkColorScheme(
 )
 
 @Composable
-fun ShopSmartTheme(
+fun ShopSimpleTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     content: @Composable () -> Unit
 ) {

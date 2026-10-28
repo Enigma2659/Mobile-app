@@ -1,5 +1,6 @@
 package com.example.shopsmart.ui
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -14,10 +15,14 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.shopsmart.R
 import com.example.shopsmart.model.CartItem
 import com.example.shopsmart.model.PROMOTIONS_LIST
 import com.example.shopsmart.model.PromotionItem
@@ -134,6 +139,13 @@ fun PromotionCardItem(
 
     val savings = promotion.initialPrice - promotion.newPrice
 
+    val imageRes = when (promotion.id) {
+        "promo_1" -> R.drawable.illovo_sugar
+        "promo_2" -> R.drawable.kukoma_cooking_oil
+        "promo_3" -> R.drawable.kilombero_rice
+        else -> R.drawable.icon
+    }
+
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(12.dp),
@@ -177,18 +189,35 @@ fun PromotionCardItem(
                 }
             }
 
-            // Item Name & Description
-            Text(
-                text = promotion.name,
-                fontWeight = FontWeight.Bold,
-                fontSize = 18.sp
-            )
+            // Image + Item Name & Description
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Image(
+                    painter = painterResource(id = imageRes),
+                    contentDescription = promotion.name,
+                    modifier = Modifier
+                        .size(80.dp)
+                        .clip(RoundedCornerShape(8.dp)),
+                    contentScale = ContentScale.Crop
+                )
 
-            Text(
-                text = promotion.description,
-                fontSize = 13.sp,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
-            )
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = promotion.name,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 17.sp
+                    )
+
+                    Text(
+                        text = promotion.description,
+                        fontSize = 12.sp,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                    )
+                }
+            }
 
             // Price section: Initial Price (strikethrough) + New Price
             Row(

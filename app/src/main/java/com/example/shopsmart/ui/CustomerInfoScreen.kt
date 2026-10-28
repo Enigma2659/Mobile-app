@@ -1,6 +1,7 @@
 package com.example.shopsmart.ui
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -15,7 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.shopsmart.model.DELIVERY_LOCATIONS
+import com.example.shopsmart.model.CITIES_DELIVERY_LOCATIONS
 import com.example.shopsmart.model.DeliveryLocation
 import java.util.Locale
 
@@ -27,8 +28,9 @@ fun CustomerInfoScreen(
 ) {
     var firstName by remember { mutableStateOf("") }
     var lastName by remember { mutableStateOf("") }
-    var locationExpanded by remember { mutableStateOf(false) }
-    var selectedLocation by remember { mutableStateOf(DELIVERY_LOCATIONS.first()) }
+    var selectedCity by remember { mutableStateOf("Lilongwe") }
+    var cityLocations by remember { mutableStateOf(CITIES_DELIVERY_LOCATIONS["Lilongwe"]!!) }
+    var selectedLocation by remember { mutableStateOf(cityLocations.first()) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
 
     Scaffold(
@@ -42,7 +44,7 @@ fun CustomerInfoScreen(
                             tint = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.padding(end = 8.dp)
                         )
-                        Text("Step 2: Customer Details & Location", fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                        Text("Guest Checkout: Details & City Location", fontWeight = FontWeight.Bold, fontSize = 17.sp)
                     }
                 },
                 navigationIcon = {
@@ -67,10 +69,10 @@ fun CustomerInfoScreen(
                 .background(MaterialTheme.colorScheme.background)
                 .verticalScroll(rememberScrollState())
                 .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(20.dp)
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Text(
-                text = "Enter Customer Information",
+                text = "Enter Guest Information",
                 fontWeight = FontWeight.Bold,
                 fontSize = 18.sp
             )
@@ -88,67 +90,90 @@ fun CustomerInfoScreen(
                         value = firstName,
                         onValueChange = { firstName = it },
                         label = { Text("First Name *") },
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true
                     )
 
                     OutlinedTextField(
                         value = lastName,
                         onValueChange = { lastName = it },
                         label = { Text("Last Name *") },
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true
                     )
                 }
             }
 
             Text(
-                text = "Select Delivery Location",
+                text = "Select City",
                 fontWeight = FontWeight.Bold,
-                fontSize = 18.sp
+                fontSize = 16.sp
             )
 
-            ExposedDropdownMenuBox(
-                expanded = locationExpanded,
-                onExpandedChange = { locationExpanded = !locationExpanded },
-                modifier = Modifier.fillMaxWidth()
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                OutlinedTextField(
-                    value = selectedLocation.name,
-                    onValueChange = {},
-                    readOnly = true,
-                    label = { Text("Delivery Location *") },
-                    trailingIcon = {
-                        ExposedDropdownMenuDefaults.TrailingIcon(expanded = locationExpanded)
-                    },
-                    modifier = Modifier
-                        .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
-                        .fillMaxWidth()
-                )
+                listOf("Lilongwe", "Blantyre", "Zomba").forEach { city ->
+                    val isSelected = (selectedCity == city)
+                    Button(
+                        onClick = {
+                            selectedCity = city
+                            cityLocations = CITIES_DELIVERY_LOCATIONS[city]!!
+                            selectedLocation = cityLocations.first()
+                        },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant
+                        ),
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text(city, fontSize = 12.sp, fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal)
+                    }
+                }
+            }
 
-                ExposedDropdownMenu(
-                    expanded = locationExpanded,
-                    onDismissRequest = { locationExpanded = false }
+            Text(
+                text = "Select Delivery Area in $selectedCity",
+                fontWeight = FontWeight.Bold,
+                fontSize = 16.sp
+            )
+
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Column(
+                    modifier = Modifier.padding(12.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    DELIVERY_LOCATIONS.forEach { location ->
-                        DropdownMenuItem(
-                            text = {
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Text(text = location.name, fontWeight = FontWeight.Medium)
-                                    Text(
-                                        text = "MK${String.format(Locale.getDefault(), "%.0f", location.deliveryFee)}",
-                                        fontWeight = FontWeight.Bold,
-                                        color = MaterialTheme.colorScheme.primary
-                                    )
-                                }
-                            },
-                            onClick = {
-                                selectedLocation = location
-                                locationExpanded = false
+                    cityLocations.forEach { loc ->
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { selectedLocation = loc }
+                                .padding(vertical = 6.dp)
+                        ) {
+                            RadioButton(
+                                selected = (selectedLocation.id == loc.id),
+                                onClick = { selectedLocation = loc }
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(loc.name, fontSize = 14.sp, fontWeight = FontWeight.Medium)
+                                Text(
+                                    text = "MK${String.format(Locale.getDefault(), "%.0f", loc.deliveryFee)}",
+                                    fontSize = 13.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
                             }
-                        )
+                        }
                     }
                 }
             }

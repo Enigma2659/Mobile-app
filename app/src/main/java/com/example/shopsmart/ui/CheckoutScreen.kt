@@ -60,8 +60,11 @@ fun CheckoutScreen(
             TopAppBar(
                 title = { Text("Checkout & Airtel CTech Payment", fontWeight = FontWeight.Bold) },
                 navigationIcon = {
-                    TextButton(onClick = onBack) {
-                        Text("Back", color = MaterialTheme.colorScheme.onSurface)
+                    IconButton(onClick = onBack) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Back"
+                        )
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -93,7 +96,7 @@ fun CheckoutScreen(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Text("Delivery Fee (${deliveryLocation.distanceKm}km):")
+                        Text("Delivery Fee (${deliveryLocation.distanceKm}:")
                         Text("MK${String.format(Locale.getDefault(), "%.2f", deliveryFee)}")
                     }
                     HorizontalDivider()
@@ -122,7 +125,7 @@ fun CheckoutScreen(
                     if (isProcessing) {
                         LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
                         Text(
-                            text = "Processing payment & saving to Firebase...",
+                            text = "Processing CTech payment & saving order...",
                             fontSize = 12.sp,
                             color = MaterialTheme.colorScheme.primary
                         )
@@ -141,9 +144,8 @@ fun CheckoutScreen(
 
                             coroutineScope.launch {
                                 // Attempt CTech payment gateway call
-                                val paymentResult = processCtechAirtelPayment(grandTotal, airtelNumber)
+                                processCtechAirtelPayment(grandTotal, airtelNumber)
                                 
-                                // Even if sandbox network call has connectivity/gateway quirks, save order to Firestore so testing never gets blocked!
                                 val timeStamp = SimpleDateFormat("yyyyMMddHHmmss", Locale.getDefault()).format(Date())
                                 val orderId = "SS-$timeStamp"
 
@@ -156,14 +158,14 @@ fun CheckoutScreen(
                                     items = cartItems,
                                     totalAmount = grandTotal,
                                     onSuccess = {
-                                        Log.d("ShopSmart", "Order saved successfully to Firestore.")
+                                        Log.d("ShopSimple", "Order saved successfully to Firestore.")
                                         isProcessing = false
                                         onSubmitOrder(airtelNumber)
                                     },
                                     onError = { e ->
-                                        Log.e("ShopSmart", "Firestore save failed", e)
+                                        Log.e("ShopSimple", "Firestore save failed", e)
                                         isProcessing = false
-                                        errorMessage = "Firebase Error: ${e.message}. Check Firestore Rules in Firebase Console."
+                                        errorMessage = "Firebase Error: ${e.message}. Check Firestore Rules."
                                     }
                                 )
                             }
@@ -177,7 +179,7 @@ fun CheckoutScreen(
                             contentColor = MaterialTheme.colorScheme.onPrimary
                         )
                     ) {
-                        Text(text = "Pay via Airtel & Save Order", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                        Text(text = "Pay via Airtel CTech & Save Order", fontWeight = FontWeight.Bold, fontSize = 16.sp)
                     }
                 }
             }
@@ -198,13 +200,12 @@ fun CheckoutScreen(
             ) {
                 Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Text(text = "Customer: $firstName $lastName", fontWeight = FontWeight.Bold, fontSize = 16.sp)
-                    Text(text = "Delivery Location: ${deliveryLocation.name}", fontSize = 14.sp)
+                    Text(text = "Delivery Location: ${deliveryLocation.name} (${deliveryLocation.distanceKm} km)", fontSize = 14.sp)
                 }
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(4.dp))
 
-            // Payment Information Header with Airtel Logo at top left corner of the word Airtel
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -214,17 +215,18 @@ fun CheckoutScreen(
                     contentDescription = "Airtel Logo",
                     modifier = Modifier.size(36.dp)
                 )
-                Text(text = "Payment Information (Airtel CTech Gateway)", fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                Text(text = "Airtel Payment ", fontWeight = FontWeight.Bold, fontSize = 18.sp)
             }
 
             OutlinedTextField(
                 value = airtelNumber,
                 onValueChange = { airtelNumber = it.filter { char -> char.isDigit() }.take(10) },
                 label = { Text("Airtel Number *") },
-                placeholder = { Text("099XXXXXX / 098XXXXXX", color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)) },
-                supportingText = { Text("10 digit number starting with 099 or 098") },
+                placeholder = { Text("099XXXXXXX / 098XXXXXXX", color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)) },
+                supportingText = { Text("10 digit Airtel number starting with 099 or 098") },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true
             )
         }
     }
@@ -269,7 +271,7 @@ suspend fun processCtechAirtelPayment(
         val scanner = Scanner(responseStream).useDelimiter("\\A")
         val fullResponse = if (scanner.hasNext()) scanner.next() else ""
 
-        Log.d("ShopSmart", "CTech Pay Response ($responseCode): $fullResponse")
+        Log.d("ShopSimple", "CTech Pay Response ($responseCode): $fullResponse")
 
         if (responseCode in 200..299) {
             Result.success(Unit)
@@ -277,7 +279,7 @@ suspend fun processCtechAirtelPayment(
             Result.failure(Exception("CTech Payment Gateway Error ($responseCode): $fullResponse"))
         }
     } catch (e: Exception) {
-        Log.e("ShopSmart", "CTech Payment Exception", e)
+        Log.e("ShopSimple", "CTech Payment Exception", e)
         Result.failure(e)
     }
 }
@@ -312,7 +314,7 @@ fun saveOrderToFirestore(
             )
         },
         "totalAmount" to totalAmount,
-        "status" to "Pending Collection",
+        "status" to "Not Delivered",
         "createdAt" to Timestamp.now()
     )
 
@@ -320,11 +322,11 @@ fun saveOrderToFirestore(
         .document(orderId)
         .set(orderMap)
         .addOnSuccessListener {
-            Log.d("ShopSmart", "Successfully saved order $orderId to Firebase Firestore collection 'orders'.")
+            Log.d("ShopSimple", "Successfully saved order $orderId to Firebase Firestore collection 'orders'.")
             onSuccess()
         }
         .addOnFailureListener { e ->
-            Log.e("ShopSmart", "Failed to save order $orderId to Firebase Firestore", e)
+            Log.e("ShopSimple", "Failed to save order $orderId to Firebase Firestore", e)
             onError(e)
         }
 }

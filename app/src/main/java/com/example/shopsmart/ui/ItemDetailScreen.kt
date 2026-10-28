@@ -91,6 +91,7 @@ fun ItemDetailScreen(
                     itemId = item.id,
                     processors = item.processors,
                     selectedProcessor = selectedProcessor,
+                    imageUrl = item.imageUrl,
                     onSelectProcessor = { selectedProcessor = it }
                 )
             }

@@ -1,42 +1,41 @@
 package com.example.shopsmart
 
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ListAlt
+import androidx.compose.material.icons.automirrored.filled.ReceiptLong
+import androidx.compose.material.icons.filled.AdminPanelSettings
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.ListAlt
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material.icons.filled.Star
-import androidx.compose.material.icons.filled.Store
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.draw.scale
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.shopsmart.model.CITIES_DELIVERY_LOCATIONS
 import com.example.shopsmart.model.CartItem
 import com.example.shopsmart.model.DELIVERY_LOCATIONS
 import com.example.shopsmart.model.DeliveryLocation
 import com.example.shopsmart.model.SHOP_CATEGORIES
 import com.example.shopsmart.model.ShopItem
+import com.example.shopsmart.model.User
 import com.example.shopsmart.ui.*
-import com.example.shopsmart.ui.theme.ShopSmartTheme
+import com.example.shopsmart.ui.theme.ShopSimpleTheme
+import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
@@ -47,11 +46,12 @@ enum class NavDestination(
     val title: String,
     val icon: ImageVector
 ) {
-    CATALOG("Catalog", Icons.Default.ListAlt),
+    CATALOG("Catalog", Icons.AutoMirrored.Filled.ListAlt),
     PROMOTIONS("Promotions", Icons.Default.Star),
     SMART_AI("Smart AI Budget", Icons.Default.AutoAwesome),
     MY_CART("My Cart", Icons.Default.ShoppingCart),
-    ADMIN_PANEL("System Admin Panel", Icons.Default.Store),
+    PROFILE("My Profile", Icons.Default.Person),
+    ADMIN_PANEL("Admin Portal", Icons.Default.AdminPanelSettings),
     CONTACT_US("Contact Us", Icons.Default.Phone),
     ABOUT_US("More About Us", Icons.Default.Info)
 }
@@ -62,7 +62,9 @@ data class CompletedOrder(
     val lastName: String,
     val phoneNumber: String,
     val deliveryLocation: DeliveryLocation,
-    val items: List<CartItem>
+    val items: List<CartItem>,
+    val timestamp: String = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault()).format(Date()),
+    val status: String = "Not Delivered"
 )
 
 data class CheckoutCustomerState(
@@ -76,8 +78,29 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            ShopSmartTheme {
+            ShopSimpleTheme {
                 var showSplash by remember { mutableStateOf(true) }
+                var currentUser by remember { mutableStateOf<User?>(null) }
+                var isAdminLoggedIn by remember { mutableStateOf(false) }
+                var isGuest by remember { mutableStateOf(false) }
+                var registeredUsers by remember { mutableStateOf(listOf<User>()) }
+                var allOrders by remember { mutableStateOf(listOf<CompletedOrder>()) }
+                var adminUser by remember {
+                    mutableStateOf(
+                        User(
+                            firstName = "Enigma",
+                            lastName = "Sanudi",
+                            username = "Enigma",
+                            password = "Sanudi",
+                            phoneNumber = "+265999000000",
+                            email = "enigma.sanudi@shopsimple.mw",
+                            city = "Lilongwe",
+                            deliveryLocationName = "Biwi",
+                            category = "Offices"
+                        )
+                    )
+                }
+
                 var currentDestination by remember { mutableStateOf(NavDestination.CATALOG) }
                 var cartItems by remember { mutableStateOf(listOf<CartItem>()) }
                 var categoriesState by remember { mutableStateOf(SHOP_CATEGORIES) }
@@ -86,11 +109,221 @@ class MainActivity : ComponentActivity() {
                 var checkoutCustomerState by remember { mutableStateOf<CheckoutCustomerState?>(null) }
                 var isPaymentScreen by remember { mutableStateOf(false) }
 
+                // Admin Login Dialog state when clicking Admin Portal from menu
+                var showAdminLoginDialog by remember { mutableStateOf(false) }
+                var dialogAdminUser by remember { mutableStateOf("") }
+                var dialogAdminPass by remember { mutableStateOf("") }
+                var dialogAdminError by remember { mutableStateOf<String?>(null) }
+
                 val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
                 val scope = rememberCoroutineScope()
 
+                // Real-time Firestore Listeners
+                LaunchedEffect(Unit) {
+                    val db = FirebaseFirestore.getInstance()
+
+                    // 1. Real-time Users Listener
+                    db.collection("users").addSnapshotListener { snapshot, _ ->
+                        if (snapshot != null) {
+                            registeredUsers = snapshot.documents.mapNotNull { doc ->
+                                try {
+                                    User(
+                                        id = doc.getString("id") ?: doc.id,
+                                        firstName = doc.getString("firstName") ?: "",
+                                        lastName = doc.getString("lastName") ?: "",
+                                        username = doc.getString("username") ?: "",
+                                        password = doc.getString("password") ?: "",
+                                        phoneNumber = doc.getString("phoneNumber") ?: "",
+                                        email = doc.getString("email") ?: "",
+                                        city = doc.getString("city") ?: "Lilongwe",
+                                        deliveryLocationName = doc.getString("deliveryLocationName") ?: "Biwi",
+                                        category = doc.getString("category") ?: "Students",
+                                        profileImageUrl = doc.getString("profileImageUrl") ?: ""
+                                    )
+                                } catch (_: Exception) { null }
+                            }
+                        }
+                    }
+
+                    // 2. Real-time Orders Listener
+                    db.collection("orders").addSnapshotListener { snapshot, _ ->
+                        if (snapshot != null) {
+                            allOrders = snapshot.documents.mapNotNull { doc ->
+                                try {
+                                    val orderId = doc.getString("orderId") ?: doc.id
+                                    val firstName = doc.getString("firstName") ?: ""
+                                    val lastName = doc.getString("lastName") ?: ""
+                                    val phone = doc.getString("phoneNumber") ?: ""
+                                    val locName = doc.getString("deliveryLocation") ?: "Biwi"
+                                    val status = doc.getString("status") ?: "Not Delivered"
+                                    CompletedOrder(
+                                        orderId = orderId,
+                                        firstName = firstName,
+                                        lastName = lastName,
+                                        phoneNumber = phone,
+                                        deliveryLocation = DeliveryLocation(orderId, locName, 3.0, 3.0 * 0.2),
+                                        items = emptyList(),
+                                        status = status
+                                    )
+                                } catch (_: Exception) { null }
+                            }
+                        }
+                    }
+
+                    // 3. Real-time Products / Catalog Listener
+                    db.collection("products").addSnapshotListener { snapshot, _ ->
+                        if (snapshot != null) {
+                            val fetchedItems = snapshot.documents.mapNotNull { doc ->
+                                try {
+                                    ShopItem(
+                                        id = doc.getString("id") ?: doc.id,
+                                        name = doc.getString("name") ?: "",
+                                        categoryId = doc.getLong("categoryId")?.toInt() ?: 1,
+                                        processors = (doc.get("processors") as? List<*>)?.map { it.toString() } ?: listOf("Standard"),
+                                        weightsOrSizes = (doc.get("weightsOrSizes") as? List<*>)?.map { it.toString() } ?: listOf("1 Unit"),
+                                        basePrice = doc.getDouble("basePrice") ?: 50.0,
+                                        imageUrl = doc.getString("imageUrl") ?: "",
+                                        description = doc.getString("description") ?: ""
+                                    )
+                                } catch (_: Exception) { null }
+                            }
+                            if (fetchedItems.isNotEmpty()) {
+                                categoriesState = SHOP_CATEGORIES.map { cat ->
+                                    val catItems = fetchedItems.filter { it.categoryId == cat.id }
+                                    if (catItems.isNotEmpty()) {
+                                        cat.copy(items = cat.items.filterNot { defaultItem -> catItems.any { it.id == defaultItem.id } } + catItems)
+                                    } else {
+                                        cat
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Admin Login Dialog
+                if (showAdminLoginDialog) {
+                    AlertDialog(
+                        onDismissRequest = { showAdminLoginDialog = false },
+                        title = { Text("System Admin Access", fontWeight = FontWeight.Bold) },
+                        text = {
+                            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                                Text("Enter Admin Credentials (Enigma / Sanudi):", fontSize = 13.sp)
+                                OutlinedTextField(
+                                    value = dialogAdminUser,
+                                    onValueChange = { dialogAdminUser = it },
+                                    label = { Text("Admin Username") },
+                                    singleLine = true
+                                )
+                                OutlinedTextField(
+                                    value = dialogAdminPass,
+                                    onValueChange = { dialogAdminPass = it },
+                                    label = { Text("Admin Password") },
+                                    visualTransformation = PasswordVisualTransformation(),
+                                    singleLine = true
+                                )
+                                if (dialogAdminError != null) {
+                                    Text(dialogAdminError!!, color = MaterialTheme.colorScheme.error, fontSize = 12.sp)
+                                }
+                            }
+                        },
+                        confirmButton = {
+                            Button(
+                                onClick = {
+                                    if (dialogAdminUser.trim().equals("Enigma", true) && dialogAdminPass == "Sanudi") {
+                                        dialogAdminError = null
+                                        showAdminLoginDialog = false
+                                        isAdminLoggedIn = true
+                                    } else {
+                                        dialogAdminError = "Invalid credentials. Use Enigma / Sanudi."
+                                    }
+                                }
+                            ) {
+                                Text("Log In as Admin")
+                            }
+                        },
+                        dismissButton = {
+                            TextButton(onClick = { showAdminLoginDialog = false }) {
+                                Text("Cancel")
+                            }
+                        }
+                    )
+                }
+
                 if (showSplash) {
                     SplashScreen(onSplashFinished = { showSplash = false })
+                } else if (isAdminLoggedIn) {
+                    // Admin View (Enigma Sanudi)
+                    AdminPanelScreen(
+                        categories = categoriesState,
+                        onAddItem = { catId, newItem ->
+                            categoriesState = categoriesState.map { cat ->
+                                if (cat.id == catId) cat.copy(items = cat.items + newItem) else cat
+                            }
+                            val db = FirebaseFirestore.getInstance()
+                            val itemMap = hashMapOf(
+                                "id" to newItem.id,
+                                "name" to newItem.name,
+                                "categoryId" to newItem.categoryId,
+                                "processors" to newItem.processors,
+                                "weightsOrSizes" to newItem.weightsOrSizes,
+                                "basePrice" to newItem.basePrice,
+                                "imageUrl" to newItem.imageUrl,
+                                "description" to newItem.description
+                            )
+                            db.collection("products").document(newItem.id).set(itemMap)
+                                .addOnSuccessListener { Log.d("ShopSimple", "Product successfully written to Firestore!") }
+                                .addOnFailureListener { e -> Log.e("ShopSimple", "Error writing product to Firestore", e) }
+                        },
+                        onEditItem = { catId, updatedItem ->
+                            categoriesState = categoriesState.map { cat ->
+                                if (cat.id == catId) {
+                                    cat.copy(items = cat.items.map { if (it.id == updatedItem.id) updatedItem else it })
+                                } else cat
+                            }
+                            val db = FirebaseFirestore.getInstance()
+                            val itemMap = hashMapOf(
+                                "id" to updatedItem.id,
+                                "name" to updatedItem.name,
+                                "categoryId" to updatedItem.categoryId,
+                                "processors" to updatedItem.processors,
+                                "weightsOrSizes" to updatedItem.weightsOrSizes,
+                                "basePrice" to updatedItem.basePrice,
+                                "imageUrl" to updatedItem.imageUrl,
+                                "description" to updatedItem.description
+                            )
+                            db.collection("products").document(updatedItem.id).set(itemMap)
+                                .addOnSuccessListener { Log.d("ShopSimple", "Product successfully updated in Firestore!") }
+                                .addOnFailureListener { e -> Log.e("ShopSimple", "Error updating product in Firestore", e) }
+                        },
+                        onDeleteItem = { itemId ->
+                            categoriesState = categoriesState.map { cat ->
+                                cat.copy(items = cat.items.filterNot { it.id == itemId })
+                            }
+                            val db = FirebaseFirestore.getInstance()
+                            db.collection("products").document(itemId).delete()
+                        },
+                        users = registeredUsers,
+                        onDeleteUser = { userId ->
+                            registeredUsers = registeredUsers.filterNot { it.id == userId }
+                            val db = FirebaseFirestore.getInstance()
+                            db.collection("users").document(userId).delete()
+                        },
+                        orders = allOrders,
+                        onUpdateOrderStatus = { orderId, newStatus ->
+                            allOrders = allOrders.map { if (it.orderId == orderId) it.copy(status = newStatus) else it }
+                            val db = FirebaseFirestore.getInstance()
+                            db.collection("orders").document(orderId).update("status", newStatus)
+                        },
+                        onDeleteOrder = { orderId ->
+                            allOrders = allOrders.filterNot { it.orderId == orderId }
+                            val db = FirebaseFirestore.getInstance()
+                            db.collection("orders").document(orderId).delete()
+                        },
+                        adminUser = adminUser,
+                        onUpdateAdminUser = { adminUser = it },
+                        onBack = { isAdminLoggedIn = false }
+                    )
                 } else {
                     ModalNavigationDrawer(
                         drawerState = drawerState,
@@ -113,7 +346,7 @@ class MainActivity : ComponentActivity() {
                                             color = MaterialTheme.colorScheme.primary
                                         )
                                         Text(
-                                            text = "For Offices, Students & Families",
+                                            text = if (currentUser != null) "Hello, ${currentUser!!.firstName}" else "Welcome, Guest",
                                             fontSize = 13.sp,
                                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)
                                         )
@@ -154,12 +387,17 @@ class MainActivity : ComponentActivity() {
                                         },
                                         selected = currentDestination == destination,
                                         onClick = {
-                                            currentDestination = destination
-                                            activeOrder = null
-                                            selectedItemForDetail = null
-                                            checkoutCustomerState = null
-                                            isPaymentScreen = false
-                                            scope.launch { drawerState.close() }
+                                            if (destination == NavDestination.ADMIN_PANEL) {
+                                                scope.launch { drawerState.close() }
+                                                showAdminLoginDialog = true
+                                            } else {
+                                                currentDestination = destination
+                                                activeOrder = null
+                                                selectedItemForDetail = null
+                                                checkoutCustomerState = null
+                                                isPaymentScreen = false
+                                                scope.launch { drawerState.close() }
+                                            }
                                         },
                                         modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
                                     )
@@ -242,18 +480,20 @@ class MainActivity : ComponentActivity() {
                                             deliveryLocation = checkoutCustomerState!!.location,
                                             cartItems = cartItems,
                                             onBack = { isPaymentScreen = false },
-                                            onSubmitOrder = { airtelNumber ->
+                                            onSubmitOrder = { phoneNumber ->
                                                 val timeStamp = SimpleDateFormat("yyyyMMddHHmmss", Locale.getDefault()).format(Date())
                                                 val orderId = "SS-$timeStamp"
                                                 val completed = CompletedOrder(
                                                     orderId = orderId,
                                                     firstName = checkoutCustomerState!!.firstName,
                                                     lastName = checkoutCustomerState!!.lastName,
-                                                    phoneNumber = airtelNumber,
+                                                    phoneNumber = phoneNumber,
                                                     deliveryLocation = checkoutCustomerState!!.location,
-                                                    items = cartItems
+                                                    items = cartItems,
+                                                    status = "Not Delivered"
                                                 )
                                                 activeOrder = completed
+                                                allOrders = allOrders + completed
                                                 cartItems = emptyList()
                                                 checkoutCustomerState = null
                                                 isPaymentScreen = false
@@ -279,7 +519,22 @@ class MainActivity : ComponentActivity() {
                                                 cartItems = cartItems.filterNot { it.id == targetItem.id }
                                             },
                                             onProceedToCustomerInfo = {
-                                                checkoutCustomerState = CheckoutCustomerState("", "", DELIVERY_LOCATIONS.first())
+                                                if (currentUser != null) {
+                                                    val userCityLocations = CITIES_DELIVERY_LOCATIONS[currentUser!!.city] ?: CITIES_DELIVERY_LOCATIONS["Lilongwe"]!!
+                                                    val userLoc = userCityLocations.find { it.name.equals(currentUser!!.deliveryLocationName, true) } ?: userCityLocations.first()
+                                                    checkoutCustomerState = CheckoutCustomerState(
+                                                        firstName = currentUser!!.firstName,
+                                                        lastName = currentUser!!.lastName,
+                                                        location = userLoc
+                                                    )
+                                                    isPaymentScreen = true
+                                                } else {
+                                                    checkoutCustomerState = CheckoutCustomerState(
+                                                        firstName = "",
+                                                        lastName = "",
+                                                        location = DELIVERY_LOCATIONS.first()
+                                                    )
+                                                }
                                             },
                                             onContinueShopping = { currentDestination = NavDestination.CATALOG },
                                             onBack = { currentDestination = NavDestination.CATALOG }
@@ -287,21 +542,32 @@ class MainActivity : ComponentActivity() {
                                     }
                                 }
 
-                                NavDestination.ADMIN_PANEL -> {
-                                    AdminPanelScreen(
-                                        categories = categoriesState,
-                                        onAddItem = { catId, newItem ->
-                                            categoriesState = categoriesState.map { cat ->
-                                                if (cat.id == catId) cat.copy(items = cat.items + newItem) else cat
-                                            }
-                                        },
-                                        onDeleteItem = { itemId ->
-                                            categoriesState = categoriesState.map { cat ->
-                                                cat.copy(items = cat.items.filterNot { it.id == itemId })
+                                NavDestination.PROFILE -> {
+                                    ProfileScreen(
+                                        user = currentUser ?: User(
+                                            firstName = "Guest",
+                                            lastName = "User",
+                                            username = "Guest",
+                                            password = "",
+                                            phoneNumber = "",
+                                            email = "",
+                                            city = "Lilongwe",
+                                            deliveryLocationName = "Biwi",
+                                            category = "Students"
+                                        ),
+                                        onUpdateUser = { updated ->
+                                            if (currentUser != null) {
+                                                currentUser = updated
+                                                registeredUsers = registeredUsers.map { if (it.id == updated.id) updated else it }
                                             }
                                         },
                                         onBack = { currentDestination = NavDestination.CATALOG }
                                     )
+                                }
+
+                                NavDestination.ADMIN_PANEL -> {
+                                    // Handled via Admin dialog / state
+                                    currentDestination = NavDestination.CATALOG
                                 }
 
                                 NavDestination.CONTACT_US -> {
@@ -322,93 +588,55 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
-
-    private fun addOrMergeCartItem(currentList: List<CartItem>, newItem: CartItem): List<CartItem> {
-        val existingIndex = currentList.indexOfFirst {
-            it.itemTitle == newItem.itemTitle &&
-                    it.selectedProcessor == newItem.selectedProcessor &&
-                    it.selectedWeight == newItem.selectedWeight
-        }
-        return if (existingIndex != -1) {
-            val existing = currentList[existingIndex]
-            val updated = currentList.toMutableList()
-            updated[existingIndex] = existing.copy(quantity = existing.quantity + newItem.quantity)
-            updated
-        } else {
-            currentList + newItem
-        }
-    }
 }
 
 @Composable
 fun SplashScreen(onSplashFinished: () -> Unit) {
-    var startAnimation by remember { mutableStateOf(false) }
-    val alphaAnim = animateFloatAsState(
-        targetValue = if (startAnimation) 1f else 0f,
-        animationSpec = tween(durationMillis = 1000),
-        label = "alpha"
-    )
-    val scaleAnim = animateFloatAsState(
-        targetValue = if (startAnimation) 1f else 0.7f,
-        animationSpec = tween(durationMillis = 1000, easing = FastOutSlowInEasing),
-        label = "scale"
-    )
-
-    LaunchedEffect(key1 = true) {
-        startAnimation = true
-        delay(1800)
+    LaunchedEffect(Unit) {
+        delay(1200)
         onSplashFinished()
     }
-
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.White),
+            .background(MaterialTheme.colorScheme.primaryContainer),
         contentAlignment = Alignment.Center
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-            modifier = Modifier
-                .graphicsLayer(alpha = alphaAnim.value, scaleX = scaleAnim.value, scaleY = scaleAnim.value)
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Surface(
-                shape = RoundedCornerShape(24.dp),
-                color = Color(0xFFE94B4B),
-                modifier = Modifier.size(90.dp),
-                shadowElevation = 8.dp
-            ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Text(
-                        text = "SS",
-                        fontSize = 36.sp,
-                        fontWeight = FontWeight.ExtraBold,
-                        color = Color.White
-                    )
-                }
-            }
-
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    text = "Shop ",
-                    fontSize = 32.sp,
-                    fontWeight = FontWeight.ExtraBold,
-                    color = Color(0xFF5B7CFA)
-                )
-                Text(
-                    text = "Simple",
-                    fontSize = 32.sp,
-                    fontWeight = FontWeight.ExtraBold,
-                    color = Color(0xFFE94B4B)
-                )
-            }
-
+            Text(text = "🛒", fontSize = 64.sp)
+            Text(
+                text = "Shop Simple",
+                fontWeight = FontWeight.ExtraBold,
+                fontSize = 28.sp,
+                color = MaterialTheme.colorScheme.primary
+            )
             Text(
                 text = "For Offices, Students & Families",
                 fontSize = 14.sp,
-                fontWeight = FontWeight.Medium,
-                color = Color(0xFF6E6E77)
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)
             )
         }
+    }
+}
+
+fun addOrMergeCartItem(currentList: List<CartItem>, newItem: CartItem): List<CartItem> {
+    val existingIndex = currentList.indexOfFirst {
+        it.itemId == newItem.itemId &&
+                it.selectedProcessor == newItem.selectedProcessor &&
+                it.selectedWeight == newItem.selectedWeight
+    }
+    return if (existingIndex != -1) {
+        currentList.mapIndexed { index, item ->
+            if (index == existingIndex) {
+                item.copy(quantity = item.quantity + newItem.quantity)
+            } else {
+                item
+            }
+        }
+    } else {
+        currentList + newItem
     }
 }
