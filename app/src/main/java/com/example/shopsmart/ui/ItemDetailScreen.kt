@@ -3,14 +3,15 @@ package com.example.shopsmart.ui
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -21,11 +22,6 @@ import androidx.compose.ui.unit.sp
 import com.example.shopsmart.model.CartItem
 import com.example.shopsmart.model.ShopItem
 import java.util.Locale
-
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.KeyboardArrowDown
-import androidx.compose.material.icons.filled.KeyboardArrowUp
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -203,10 +199,7 @@ fun ItemDetailScreen(
                 Button(
                     onClick = {
                         val cartItem = CartItem(
-<<<<<<< HEAD
                             itemId = item.id,
-=======
->>>>>>> 3a76190b84a8a913a5dcfb0e21e88d8287dd35cb
                             itemTitle = item.name,
                             selectedProcessor = selectedProcessor,
                             selectedWeight = selectedWeight,

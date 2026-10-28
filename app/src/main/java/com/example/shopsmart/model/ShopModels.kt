@@ -41,7 +41,8 @@ data class PromotionItem(
     val initialPrice: Double,
     val newPrice: Double,
     val selectedProcessor: String,
-    val selectedWeight: String
+    val selectedWeight: String,
+    val imageUrl: String = ""
 )
 
 data class CartItem(
@@ -61,6 +62,24 @@ data class DeliveryLocation(
     val name: String,
     val distanceKm: Double,
     val deliveryFee: Double
+)
+
+data class CompletedOrder(
+    val orderId: String,
+    val firstName: String,
+    val lastName: String,
+    val phoneNumber: String,
+    val deliveryLocation: DeliveryLocation,
+    val items: List<CartItem>,
+    val itemsSubtotal: Double = 0.0,
+    val grandTotal: Double = 0.0,
+    val paymentMethod: String = "PayChangu (Airtel Money)",
+    val airtelNumber: String = "",
+    val payChanguTxRef: String = "",
+    val timestamp: Long = System.currentTimeMillis(),
+    val isReceived: Boolean = false,
+    val receivedAt: Long? = null,
+    val status: String = "Not Delivered"
 )
 
 data class User(

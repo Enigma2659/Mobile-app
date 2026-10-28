@@ -1,5 +1,6 @@
 package com.example.shopsmart.ui
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -25,6 +26,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.shopsmart.model.CartItem
+import com.example.shopsmart.model.User
 import com.example.shopsmart.model.UserPersona
 import com.example.shopsmart.model.generateSmartBudgetPlan
 import java.util.Locale
@@ -32,12 +34,21 @@ import java.util.Locale
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SmartAIBudgetScreen(
+    currentUser: User? = null,
     onAddMultipleToCart: (List<CartItem>) -> Unit,
     onOpenCart: () -> Unit,
     cartItemsCount: Int,
     onBack: () -> Unit = {}
 ) {
-    var selectedPersona by remember { mutableStateOf(UserPersona.STUDENTS) }
+    val initialPersona = remember(currentUser) {
+        when {
+            currentUser?.category?.contains("Office", ignoreCase = true) == true -> UserPersona.OFFICES
+            currentUser?.category?.contains("Family", ignoreCase = true) == true -> UserPersona.FAMILIES
+            else -> UserPersona.STUDENTS
+        }
+    }
+
+    var selectedPersona by remember { mutableStateOf(initialPersona) }
     var groupCount by remember { mutableIntStateOf(1) }
     var budgetText by remember { mutableStateOf("10000") }
     var generatedPlan by remember { mutableStateOf<List<CartItem>?>(null) }
@@ -138,62 +149,66 @@ fun SmartAIBudgetScreen(
                 }
             }
 
-            // Question 1: Who are you among that?
-            Text(
-                text = "1. Who are you among that?",
-                fontWeight = FontWeight.Bold,
-                fontSize = 16.sp
-            )
-
-            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                UserPersona.entries.forEach { persona ->
-                    val isSelected = selectedPersona == persona
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(
-                                if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
-                                else MaterialTheme.colorScheme.surface
-                            )
-                            .border(
-                                width = if (isSelected) 2.dp else 1.dp,
-                                color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline.copy(alpha = 0.2f),
-                                shape = RoundedCornerShape(12.dp)
-                            )
-                            .clickable {
-                                selectedPersona = persona
-                                groupCount = when (persona) {
-                                    UserPersona.OFFICES -> 5
-                                    UserPersona.FAMILIES -> 3
-                                    UserPersona.STUDENTS -> 1
-                                }
-                                generatedPlan = null
-                                bundleAdded = false
-                            }
-                            .padding(14.dp)
+            if (currentUser != null) {
+                // Display personalized profile card instead of asking "Who are you?"
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.4f)),
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.secondary.copy(alpha = 0.5f))
+                ) {
+                    Row(
+                        modifier = Modifier.padding(14.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(12.dp)
-                        ) {
-                            Text(text = persona.icon, fontSize = 28.sp)
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(
-                                    text = persona.title,
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 16.sp,
-                                    color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                        Text(text = selectedPersona.icon, fontSize = 28.sp)
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = "👤 Personalized Profile: ${currentUser.firstName}",
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 15.sp,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                            Text(
+                                text = "Category: ${currentUser.category} | City: ${currentUser.city}",
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)
+                            )
+                            Text(
+                                text = "(Auto-detected from your account profile)",
+                                fontSize = 11.sp,
+                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                            )
+                        }
+                    }
+                }
+            } else {
+                // Guest mode: Question 1: Who are you among that?
+                Text(
+                    text = "1. Who are you among that?",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 16.sp
+                )
+
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    UserPersona.entries.forEach { persona ->
+                        val isSelected = selectedPersona == persona
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(
+                                    if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
+                                    else MaterialTheme.colorScheme.surface
                                 )
-                                Text(
-                                    text = persona.description,
-                                    fontSize = 12.sp,
-                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                                .border(
+                                    width = if (isSelected) 2.dp else 1.dp,
+                                    color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline.copy(alpha = 0.2f),
+                                    shape = RoundedCornerShape(12.dp)
                                 )
-                            }
-                            RadioButton(
-                                selected = isSelected,
-                                onClick = {
+                                .clickable {
                                     selectedPersona = persona
                                     groupCount = when (persona) {
                                         UserPersona.OFFICES -> 5
@@ -203,7 +218,40 @@ fun SmartAIBudgetScreen(
                                     generatedPlan = null
                                     bundleAdded = false
                                 }
-                            )
+                                .padding(14.dp)
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                            ) {
+                                Text(text = persona.icon, fontSize = 28.sp)
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = persona.title,
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 16.sp,
+                                        color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                                    )
+                                    Text(
+                                        text = persona.description,
+                                        fontSize = 12.sp,
+                                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                                    )
+                                }
+                                RadioButton(
+                                    selected = isSelected,
+                                    onClick = {
+                                        selectedPersona = persona
+                                        groupCount = when (persona) {
+                                            UserPersona.OFFICES -> 5
+                                            UserPersona.FAMILIES -> 3
+                                            UserPersona.STUDENTS -> 1
+                                        }
+                                        generatedPlan = null
+                                        bundleAdded = false
+                                    }
+                                )
+                            }
                         }
                     }
                 }

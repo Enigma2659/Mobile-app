@@ -8,9 +8,8 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.automirrored.filled.ListAlt
-import androidx.compose.material.icons.automirrored.filled.ReceiptLong
-import androidx.compose.material.icons.filled.AdminPanelSettings
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Person
@@ -23,11 +22,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.shopsmart.model.CITIES_DELIVERY_LOCATIONS
 import com.example.shopsmart.model.CartItem
+import com.example.shopsmart.model.CompletedOrder
 import com.example.shopsmart.model.DELIVERY_LOCATIONS
 import com.example.shopsmart.model.DeliveryLocation
 import com.example.shopsmart.model.SHOP_CATEGORIES
@@ -51,21 +50,9 @@ enum class NavDestination(
     SMART_AI("Smart AI Budget", Icons.Default.AutoAwesome),
     MY_CART("My Cart", Icons.Default.ShoppingCart),
     PROFILE("My Profile", Icons.Default.Person),
-    ADMIN_PANEL("Admin Portal", Icons.Default.AdminPanelSettings),
     CONTACT_US("Contact Us", Icons.Default.Phone),
     ABOUT_US("More About Us", Icons.Default.Info)
 }
-
-data class CompletedOrder(
-    val orderId: String,
-    val firstName: String,
-    val lastName: String,
-    val phoneNumber: String,
-    val deliveryLocation: DeliveryLocation,
-    val items: List<CartItem>,
-    val timestamp: String = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault()).format(Date()),
-    val status: String = "Not Delivered"
-)
 
 data class CheckoutCustomerState(
     val firstName: String,
@@ -108,12 +95,6 @@ class MainActivity : ComponentActivity() {
                 var selectedItemForDetail by remember { mutableStateOf<ShopItem?>(null) }
                 var checkoutCustomerState by remember { mutableStateOf<CheckoutCustomerState?>(null) }
                 var isPaymentScreen by remember { mutableStateOf(false) }
-
-                // Admin Login Dialog state when clicking Admin Portal from menu
-                var showAdminLoginDialog by remember { mutableStateOf(false) }
-                var dialogAdminUser by remember { mutableStateOf("") }
-                var dialogAdminPass by remember { mutableStateOf("") }
-                var dialogAdminError by remember { mutableStateOf<String?>(null) }
 
                 val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
                 val scope = rememberCoroutineScope()
@@ -201,57 +182,25 @@ class MainActivity : ComponentActivity() {
                     }
                 }
 
-                // Admin Login Dialog
-                if (showAdminLoginDialog) {
-                    AlertDialog(
-                        onDismissRequest = { showAdminLoginDialog = false },
-                        title = { Text("System Admin Access", fontWeight = FontWeight.Bold) },
-                        text = {
-                            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                                Text("Enter Admin Credentials (Enigma / Sanudi):", fontSize = 13.sp)
-                                OutlinedTextField(
-                                    value = dialogAdminUser,
-                                    onValueChange = { dialogAdminUser = it },
-                                    label = { Text("Admin Username") },
-                                    singleLine = true
-                                )
-                                OutlinedTextField(
-                                    value = dialogAdminPass,
-                                    onValueChange = { dialogAdminPass = it },
-                                    label = { Text("Admin Password") },
-                                    visualTransformation = PasswordVisualTransformation(),
-                                    singleLine = true
-                                )
-                                if (dialogAdminError != null) {
-                                    Text(dialogAdminError!!, color = MaterialTheme.colorScheme.error, fontSize = 12.sp)
-                                }
-                            }
-                        },
-                        confirmButton = {
-                            Button(
-                                onClick = {
-                                    if (dialogAdminUser.trim().equals("Enigma", true) && dialogAdminPass == "Sanudi") {
-                                        dialogAdminError = null
-                                        showAdminLoginDialog = false
-                                        isAdminLoggedIn = true
-                                    } else {
-                                        dialogAdminError = "Invalid credentials. Use Enigma / Sanudi."
-                                    }
-                                }
-                            ) {
-                                Text("Log In as Admin")
-                            }
-                        },
-                        dismissButton = {
-                            TextButton(onClick = { showAdminLoginDialog = false }) {
-                                Text("Cancel")
-                            }
-                        }
-                    )
-                }
-
                 if (showSplash) {
                     SplashScreen(onSplashFinished = { showSplash = false })
+                } else if (currentUser == null && !isGuest && !isAdminLoggedIn) {
+                    // First Screen: Login & Sign Up Page
+                    AuthScreen(
+                        registeredUsers = registeredUsers,
+                        onLoginSuccess = { user ->
+                            currentUser = user
+                            isGuest = false
+                            currentDestination = NavDestination.CATALOG
+                        },
+                        onAdminLoginSuccess = {
+                            isAdminLoggedIn = true
+                        },
+                        onContinueAsGuest = {
+                            isGuest = true
+                            currentDestination = NavDestination.CATALOG
+                        }
+                    )
                 } else if (isAdminLoggedIn) {
                     // Admin View (Enigma Sanudi)
                     AdminPanelScreen(
@@ -272,7 +221,7 @@ class MainActivity : ComponentActivity() {
                                 "description" to newItem.description
                             )
                             db.collection("products").document(newItem.id).set(itemMap)
-                                .addOnSuccessListener { Log.d("ShopSimple", "Product successfully written to Firestore!") }
+                                .addOnSuccessListener { Log.d("ShopSimple", "Product written to Firestore!") }
                                 .addOnFailureListener { e -> Log.e("ShopSimple", "Error writing product to Firestore", e) }
                         },
                         onEditItem = { catId, updatedItem ->
@@ -293,7 +242,7 @@ class MainActivity : ComponentActivity() {
                                 "description" to updatedItem.description
                             )
                             db.collection("products").document(updatedItem.id).set(itemMap)
-                                .addOnSuccessListener { Log.d("ShopSimple", "Product successfully updated in Firestore!") }
+                                .addOnSuccessListener { Log.d("ShopSimple", "Product updated in Firestore!") }
                                 .addOnFailureListener { e -> Log.e("ShopSimple", "Error updating product in Firestore", e) }
                         },
                         onDeleteItem = { itemId ->
@@ -346,7 +295,7 @@ class MainActivity : ComponentActivity() {
                                             color = MaterialTheme.colorScheme.primary
                                         )
                                         Text(
-                                            text = if (currentUser != null) "Hello, ${currentUser!!.firstName}" else "Welcome, Guest",
+                                            text = if (currentUser != null) "Hello, ${currentUser!!.firstName} (${currentUser!!.category})" else "Welcome, Guest",
                                             fontSize = 13.sp,
                                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)
                                         )
@@ -355,7 +304,7 @@ class MainActivity : ComponentActivity() {
 
                                 Spacer(modifier = Modifier.height(12.dp))
 
-                                // Navigation Items
+                                // Navigation Items (Admin Portal excluded)
                                 NavDestination.entries.forEach { destination ->
                                     NavigationDrawerItem(
                                         label = {
@@ -387,21 +336,45 @@ class MainActivity : ComponentActivity() {
                                         },
                                         selected = currentDestination == destination,
                                         onClick = {
-                                            if (destination == NavDestination.ADMIN_PANEL) {
-                                                scope.launch { drawerState.close() }
-                                                showAdminLoginDialog = true
-                                            } else {
-                                                currentDestination = destination
-                                                activeOrder = null
-                                                selectedItemForDetail = null
-                                                checkoutCustomerState = null
-                                                isPaymentScreen = false
-                                                scope.launch { drawerState.close() }
-                                            }
+                                            currentDestination = destination
+                                            activeOrder = null
+                                            selectedItemForDetail = null
+                                            checkoutCustomerState = null
+                                            isPaymentScreen = false
+                                            scope.launch { drawerState.close() }
                                         },
                                         modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
                                     )
                                 }
+
+                                HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp))
+
+                                // Sign Out / Switch Account Drawer Item
+                                NavigationDrawerItem(
+                                    label = {
+                                        Text(
+                                            text = if (currentUser != null) "Sign Out" else "Sign In / Register",
+                                            fontWeight = FontWeight.Bold,
+                                            color = MaterialTheme.colorScheme.error
+                                        )
+                                    },
+                                    icon = {
+                                        Icon(
+                                            imageVector = Icons.AutoMirrored.Filled.ExitToApp,
+                                            contentDescription = "Sign Out",
+                                            tint = MaterialTheme.colorScheme.error
+                                        )
+                                    },
+                                    selected = false,
+                                    onClick = {
+                                        currentUser = null
+                                        isGuest = false
+                                        isAdminLoggedIn = false
+                                        currentDestination = NavDestination.CATALOG
+                                        scope.launch { drawerState.close() }
+                                    },
+                                    modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
+                                )
                             }
                         }
                     ) {
@@ -459,6 +432,7 @@ class MainActivity : ComponentActivity() {
 
                                 NavDestination.SMART_AI -> {
                                     SmartAIBudgetScreen(
+                                        currentUser = currentUser,
                                         onAddMultipleToCart = { bundleItems ->
                                             var updated = cartItems
                                             bundleItems.forEach { item ->
@@ -479,7 +453,12 @@ class MainActivity : ComponentActivity() {
                                             lastName = checkoutCustomerState!!.lastName,
                                             deliveryLocation = checkoutCustomerState!!.location,
                                             cartItems = cartItems,
-                                            onBack = { isPaymentScreen = false },
+                                            onBack = {
+                                                isPaymentScreen = false
+                                                if (currentUser != null) {
+                                                    checkoutCustomerState = null
+                                                }
+                                            },
                                             onSubmitOrder = { phoneNumber ->
                                                 val timeStamp = SimpleDateFormat("yyyyMMddHHmmss", Locale.getDefault()).format(Date())
                                                 val orderId = "SS-$timeStamp"
@@ -494,6 +473,30 @@ class MainActivity : ComponentActivity() {
                                                 )
                                                 activeOrder = completed
                                                 allOrders = allOrders + completed
+
+                                                // Save Order to Firebase Firestore in Realtime
+                                                val db = FirebaseFirestore.getInstance()
+                                                val orderMap = hashMapOf<String, Any>(
+                                                    "orderId" to completed.orderId,
+                                                    "firstName" to completed.firstName,
+                                                    "lastName" to completed.lastName,
+                                                    "phoneNumber" to completed.phoneNumber,
+                                                    "deliveryLocation" to completed.deliveryLocation.name,
+                                                    "status" to completed.status,
+                                                    "timestamp" to completed.timestamp,
+                                                    "items" to completed.items.map { item ->
+                                                        mapOf(
+                                                            "id" to item.id,
+                                                            "itemTitle" to item.itemTitle,
+                                                            "selectedProcessor" to item.selectedProcessor,
+                                                            "selectedWeight" to item.selectedWeight,
+                                                            "quantity" to item.quantity,
+                                                            "unitPrice" to item.unitPrice
+                                                        )
+                                                    }
+                                                )
+                                                db.collection("orders").document(completed.orderId).set(orderMap)
+
                                                 cartItems = emptyList()
                                                 checkoutCustomerState = null
                                                 isPaymentScreen = false
@@ -563,11 +566,6 @@ class MainActivity : ComponentActivity() {
                                         },
                                         onBack = { currentDestination = NavDestination.CATALOG }
                                     )
-                                }
-
-                                NavDestination.ADMIN_PANEL -> {
-                                    // Handled via Admin dialog / state
-                                    currentDestination = NavDestination.CATALOG
                                 }
 
                                 NavDestination.CONTACT_US -> {

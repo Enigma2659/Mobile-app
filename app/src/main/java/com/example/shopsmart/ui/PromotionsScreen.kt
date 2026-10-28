@@ -22,6 +22,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
 import com.example.shopsmart.R
 import com.example.shopsmart.model.CartItem
 import com.example.shopsmart.model.PROMOTIONS_LIST
@@ -195,14 +196,25 @@ fun PromotionCardItem(
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Image(
-                    painter = painterResource(id = imageRes),
-                    contentDescription = promotion.name,
-                    modifier = Modifier
-                        .size(80.dp)
-                        .clip(RoundedCornerShape(8.dp)),
-                    contentScale = ContentScale.Crop
-                )
+                if (promotion.imageUrl.isNotBlank()) {
+                    AsyncImage(
+                        model = promotion.imageUrl,
+                        contentDescription = promotion.name,
+                        modifier = Modifier
+                            .size(80.dp)
+                            .clip(RoundedCornerShape(8.dp)),
+                        contentScale = ContentScale.Crop
+                    )
+                } else {
+                    Image(
+                        painter = painterResource(id = imageRes),
+                        contentDescription = promotion.name,
+                        modifier = Modifier
+                            .size(80.dp)
+                            .clip(RoundedCornerShape(8.dp)),
+                        contentScale = ContentScale.Crop
+                    )
+                }
 
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
@@ -283,10 +295,7 @@ fun PromotionCardItem(
                 Button(
                     onClick = {
                         val cartItem = CartItem(
-<<<<<<< HEAD
                             itemId = promotion.id,
-=======
->>>>>>> 3a76190b84a8a913a5dcfb0e21e88d8287dd35cb
                             itemTitle = promotion.name,
                             selectedProcessor = promotion.selectedProcessor,
                             selectedWeight = promotion.selectedWeight,

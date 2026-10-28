@@ -30,11 +30,13 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.shopsmart.CompletedOrder
 import com.example.shopsmart.model.CITIES_DELIVERY_LOCATIONS
 import com.example.shopsmart.model.Category
+import com.example.shopsmart.model.CompletedOrder
 import com.example.shopsmart.model.ShopItem
 import com.example.shopsmart.model.User
+import java.text.SimpleDateFormat
+import java.util.Date
 import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -433,7 +435,10 @@ fun AdminPanelScreen(
 
                                         Text(text = "Customer: ${order.firstName} ${order.lastName} (${order.phoneNumber})", fontSize = 13.sp)
                                         Text(text = "Location: ${order.deliveryLocation.name}", fontSize = 13.sp, fontWeight = FontWeight.Medium)
-                                        Text(text = "Time of Order: ${order.timestamp}", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f))
+                                        Text(text = "Time of Order: ${
+                                            SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault()).format(
+                                                Date(order.timestamp)
+                                            )}", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f))
                                         Text(text = "Items: ${order.items.sumOf { it.quantity }} | Total: MK${String.format(Locale.getDefault(), "%.2f", order.items.sumOf { it.totalPrice })}", fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
 
                                         Row(

@@ -3,7 +3,6 @@ package com.example.shopsmart.ui
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -13,8 +12,10 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Remove
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -30,10 +31,7 @@ import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.example.shopsmart.R
 import com.example.shopsmart.model.CartItem
-<<<<<<< HEAD
 import com.example.shopsmart.model.Category
-=======
->>>>>>> 3a76190b84a8a913a5dcfb0e21e88d8287dd35cb
 import com.example.shopsmart.model.SHOP_CATEGORIES
 import com.example.shopsmart.model.ShopItem
 import java.util.Locale
@@ -42,10 +40,7 @@ import java.util.Locale
 @Composable
 fun CatalogScreen(
     cartItems: List<CartItem>,
-<<<<<<< HEAD
     categories: List<Category> = SHOP_CATEGORIES,
-=======
->>>>>>> 3a76190b84a8a913a5dcfb0e21e88d8287dd35cb
     onAddToCart: (CartItem) -> Unit,
     onSelectItem: (ShopItem) -> Unit,
     onOpenDrawer: () -> Unit,
@@ -56,6 +51,7 @@ fun CatalogScreen(
     val totalCartCount = cartItems.sumOf { it.quantity }
 
     var selectedCategoryId by remember { mutableIntStateOf(0) } // 0 = All
+    var searchQuery by remember { mutableStateOf("") }
 
     Scaffold(
         topBar = {
@@ -210,12 +206,7 @@ fun CatalogScreen(
                                 fontSize = 16.sp,
                                 color = MaterialTheme.colorScheme.primary
                             )
-                            Text(
-                                text = "Auto-calculate groceries based on team/family size & income budget!",
-                                fontSize = 12.sp,
-                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)
-                            )
-                        }
+                             }
 
                         Text(
                             text = "TRY NOW →",
@@ -225,6 +216,39 @@ fun CatalogScreen(
                         )
                     }
                 }
+            }
+
+            // Search Bar
+            item {
+                OutlinedTextField(
+                    value = searchQuery,
+                    onValueChange = { searchQuery = it },
+                    placeholder = { Text("Search gloceries") },
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Default.Search,
+                            contentDescription = "Search"
+                        )
+                    },
+                    trailingIcon = {
+                        if (searchQuery.isNotEmpty()) {
+                            IconButton(onClick = { searchQuery = "" }) {
+                                Icon(
+                                    imageVector = Icons.Default.Clear,
+                                    contentDescription = "Clear Search"
+                                )
+                            }
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = MaterialTheme.colorScheme.primary,
+                        unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+                        focusedContainerColor = MaterialTheme.colorScheme.surface
+                    ),
+                    singleLine = true
+                )
             }
 
             // Category Filter Pills
@@ -246,11 +270,7 @@ fun CatalogScreen(
                                 label = { Text("All Items") }
                             )
                         }
-<<<<<<< HEAD
                         items(categories) { category ->
-=======
-                        items(SHOP_CATEGORIES) { category ->
->>>>>>> 3a76190b84a8a913a5dcfb0e21e88d8287dd35cb
                             FilterChip(
                                 selected = selectedCategoryId == category.id,
                                 onClick = { selectedCategoryId = category.id },
@@ -262,16 +282,23 @@ fun CatalogScreen(
             }
 
             // Category list with Shop Items
-            val displayedCategories = if (selectedCategoryId == 0) {
-<<<<<<< HEAD
+            val selectedCategoryList = if (selectedCategoryId == 0) {
                 categories
             } else {
                 categories.filter { it.id == selectedCategoryId }
-=======
-                SHOP_CATEGORIES
+            }
+
+            val displayedCategories = if (searchQuery.isBlank()) {
+                selectedCategoryList
             } else {
-                SHOP_CATEGORIES.filter { it.id == selectedCategoryId }
->>>>>>> 3a76190b84a8a913a5dcfb0e21e88d8287dd35cb
+                selectedCategoryList.mapNotNull { cat ->
+                    val filteredItems = cat.items.filter { item ->
+                        item.name.contains(searchQuery, ignoreCase = true) ||
+                                item.description.contains(searchQuery, ignoreCase = true) ||
+                                item.processors.any { it.contains(searchQuery, ignoreCase = true) }
+                    }
+                    if (filteredItems.isNotEmpty()) cat.copy(items = filteredItems) else null
+                }
             }
 
             items(displayedCategories) { category ->
@@ -316,7 +343,7 @@ fun CatalogItemRow(
 ) {
     var selectedProcessor by remember { mutableStateOf(shopItem.processors.firstOrNull() ?: "") }
     var selectedWeight by remember { mutableStateOf(shopItem.weightsOrSizes.firstOrNull() ?: "") }
-    var quantity by remember { mutableIntStateOf(2) }
+    var quantity by remember { mutableIntStateOf(1) }
     var addedFeedback by remember { mutableStateOf(false) }
 
     val currentUnitPrice = shopItem.getPrice(selectedProcessor, selectedWeight)
@@ -411,7 +438,7 @@ fun CatalogItemRow(
             ) {
                 Text(text = "Qty: ", fontSize = 13.sp, fontWeight = FontWeight.Medium)
                 IconButton(
-                    onClick = { if (quantity > 1) quantity-- },
+                    onClick = { if (quantity > 0) quantity-- },
                     modifier = Modifier.size(28.dp)
                 ) {
                     Icon(
@@ -441,10 +468,7 @@ fun CatalogItemRow(
             Button(
                 onClick = {
                     val cartItem = CartItem(
-<<<<<<< HEAD
                         itemId = shopItem.id,
-=======
->>>>>>> 3a76190b84a8a913a5dcfb0e21e88d8287dd35cb
                         itemTitle = shopItem.name,
                         selectedProcessor = selectedProcessor,
                         selectedWeight = selectedWeight,
@@ -471,7 +495,6 @@ fun CatalogItemRow(
     }
 }
 
-<<<<<<< HEAD
 fun getDrawableRes(itemId: String, processor: String, itemTitle: String = ""): Int {
     val id = if (itemId.isNotBlank()) itemId else when {
         itemTitle.contains("Rice", ignoreCase = true) -> "rice"
@@ -484,10 +507,6 @@ fun getDrawableRes(itemId: String, processor: String, itemTitle: String = ""): I
         else -> "icon"
     }
     return when (id) {
-=======
-fun getDrawableRes(itemId: String, processor: String): Int {
-    return when (itemId) {
->>>>>>> 3a76190b84a8a913a5dcfb0e21e88d8287dd35cb
         "rice" -> when (processor) {
             "Kilombero" -> R.drawable.kilombero_rice
             "Pishori" -> R.drawable.pishori_rice
@@ -542,7 +561,6 @@ fun BrandTypeGlassSelector(
                 val isSelected = (selectedProcessor == processor)
                 val drawableRes = getDrawableRes(itemId, processor)
 
-                // Glass container card (1.35 inch wide = ~97 dp + padding = 109 dp, 1.68 inch height = ~121 dp + padding + button = 161 dp)
                 Surface(
                     modifier = Modifier
                         .width(109.dp)
@@ -567,7 +585,6 @@ fun BrandTypeGlassSelector(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
-                        // Picture 1.35 inch wide (97 dp) and height 1.68 inch (121 dp)
                         if (imageUrl.isNotBlank()) {
                             AsyncImage(
                                 model = imageUrl,
@@ -590,7 +607,6 @@ fun BrandTypeGlassSelector(
                             )
                         }
 
-                        // Glass option button inside captioned with their name
                         Surface(
                             shape = RoundedCornerShape(6.dp),
                             color = if (isSelected) {
