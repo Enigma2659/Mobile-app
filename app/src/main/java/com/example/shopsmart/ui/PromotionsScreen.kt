@@ -222,12 +222,6 @@ fun PromotionCardItem(
                         fontWeight = FontWeight.Bold,
                         fontSize = 17.sp
                     )
-
-                    Text(
-                        text = promotion.description,
-                        fontSize = 12.sp,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
-                    )
                 }
             }
 

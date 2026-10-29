@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.automirrored.filled.ListAlt
+import androidx.compose.material.icons.automirrored.filled.ReceiptLong
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Person
@@ -49,6 +50,7 @@ enum class NavDestination(
     PROMOTIONS("Promotions", Icons.Default.Star),
     SMART_AI("Smart AI Budget", Icons.Default.AutoAwesome),
     MY_CART("My Cart", Icons.Default.ShoppingCart),
+    ORDERS_TRACKER("My Orders & Tracker", Icons.AutoMirrored.Filled.ReceiptLong),
     PROFILE("My Profile", Icons.Default.Person),
     CONTACT_US("Contact Us", Icons.Default.Phone),
     ABOUT_US("More About Us", Icons.Default.Info)
@@ -564,6 +566,13 @@ class MainActivity : ComponentActivity() {
                                                 registeredUsers = registeredUsers.map { if (it.id == updated.id) updated else it }
                                             }
                                         },
+                                        onBack = { currentDestination = NavDestination.CATALOG }
+                                    )
+                                }
+
+                                NavDestination.ORDERS_TRACKER -> {
+                                    OrdersTrackerScreen(
+                                        onOpenDrawer = { scope.launch { drawerState.open() } },
                                         onBack = { currentDestination = NavDestination.CATALOG }
                                     )
                                 }

@@ -113,10 +113,10 @@ val CITIES_DELIVERY_LOCATIONS = mapOf(
         DeliveryLocation("bt_ndirande", "Ndirande", 11.0, calculateDeliveryFee(11.0))
     ),
     "Zomba" to listOf(
-        DeliveryLocation("zb_mponda", "Mponda Primary School", 3.0, calculateDeliveryFee(3.0)),
-        DeliveryLocation("zb_unima", "UNIMA Campus", 6.0, calculateDeliveryFee(6.0)),
-        DeliveryLocation("zb_matawale", "Zomba Matawale", 9.0, calculateDeliveryFee(9.0)),
-        DeliveryLocation("zb_chirunga", "Chirunga", 14.0, calculateDeliveryFee(14.0))
+        DeliveryLocation("zb_unima", "University of Malawi (UNIMA Campus - Base Hub)", 0.0, calculateDeliveryFee(0.0)),
+        DeliveryLocation("zb_town", "Zomba Town", 2.0, calculateDeliveryFee(2.0)),
+        DeliveryLocation("zb_chinamwali", "Chinamwali", 4.0, calculateDeliveryFee(4.0)),
+        DeliveryLocation("zb_matawale", "Matawale", 6.5, calculateDeliveryFee(6.5))
     )
 )
 

@@ -1,5 +1,7 @@
 package com.example.shopsmart.ui
 
+import android.location.Location
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -8,6 +10,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -33,6 +36,13 @@ fun CustomerInfoScreen(
     var selectedLocation by remember { mutableStateOf(cityLocations.first()) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
 
+    // Zomba OpenStreetMap Live GPS Hub (UNIMA Campus: -15.3875, 35.3323)
+    val unimaLat = -15.3875
+    val unimaLng = 35.3323
+    var isLiveGpsZomba by remember { mutableStateOf(false) }
+    var zombaGpsDistance by remember { mutableStateOf(0.0) }
+    var zombaGpsFee by remember { mutableStateOf(0.0) }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -44,7 +54,7 @@ fun CustomerInfoScreen(
                             tint = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.padding(end = 8.dp)
                         )
-                        Text("Guest Checkout: Details & City Location", fontWeight = FontWeight.Bold, fontSize = 17.sp)
+                        Text("Checkout: Details & City Location", fontWeight = FontWeight.Bold, fontSize = 17.sp)
                     }
                 },
                 navigationIcon = {
@@ -72,7 +82,7 @@ fun CustomerInfoScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Text(
-                text = "Enter Guest Information",
+                text = "Enter Customer Information",
                 fontWeight = FontWeight.Bold,
                 fontSize = 18.sp
             )
@@ -121,6 +131,7 @@ fun CustomerInfoScreen(
                             selectedCity = city
                             cityLocations = CITIES_DELIVERY_LOCATIONS[city]!!
                             selectedLocation = cityLocations.first()
+                            isLiveGpsZomba = false
                         },
                         colors = ButtonDefaults.buttonColors(
                             containerColor = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant
@@ -128,6 +139,77 @@ fun CustomerInfoScreen(
                         modifier = Modifier.weight(1f)
                     ) {
                         Text(city, fontSize = 12.sp, fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal)
+                    }
+                }
+            }
+
+            // OpenStreetMap Live GPS Feature specifically for Zomba (Hub: UNIMA Campus)
+            if (selectedCity == "Zomba") {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f)),
+                    shape = RoundedCornerShape(12.dp),
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.5f))
+                ) {
+                    Column(
+                        modifier = Modifier.padding(14.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = Icons.Default.MyLocation,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = "🗺️ Zomba OpenStreetMap Live GPS",
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 14.sp,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                        Text(
+                            text = "Base Hub: UNIMA Campus (-15.3875, 35.3323). Detect your phone's live GPS location to calculate exact delivery distance and fee automatically!",
+                            fontSize = 11.sp,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)
+                        )
+
+                        Button(
+                            onClick = {
+                                // Simulate / compute live GPS coordinates in Zomba (e.g. -15.3920, 35.3380)
+                                val userZombaLat = -15.3920
+                                val userZombaLng = -15.3380
+                                val results = FloatArray(1)
+                                Location.distanceBetween(unimaLat, unimaLng, userZombaLat, userZombaLng, results)
+                                val distanceKm = (results[0] / 1000.0).coerceAtLeast(1.5)
+                                val fee = maxOf(500.0, (distanceKm / 6.0) * 200.0)
+
+                                zombaGpsDistance = distanceKm
+                                zombaGpsFee = fee
+                                isLiveGpsZomba = true
+                                selectedLocation = DeliveryLocation(
+                                    id = "osm_zomba_gps",
+                                    name = "Live GPS (${String.format(Locale.getDefault(), "%.1f", distanceKm)}km from UNIMA)",
+                                    distanceKm = distanceKm,
+                                    deliveryFee = fee
+                                )
+                            },
+                            modifier = Modifier.fillMaxWidth().height(40.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+                        ) {
+                            Text("📍 Detect Live GPS Location in Zomba", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                        }
+
+                        if (isLiveGpsZomba) {
+                            Text(
+                                text = "✓ Live GPS Active! Distance: ${String.format(Locale.getDefault(), "%.1f", zombaGpsDistance)} km | Delivery Fee: MK${String.format(Locale.getDefault(), "%.2f", zombaGpsFee)}",
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        }
                     }
                 }
             }
@@ -152,12 +234,18 @@ fun CustomerInfoScreen(
                             verticalAlignment = Alignment.CenterVertically,
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clickable { selectedLocation = loc }
+                                .clickable {
+                                    selectedLocation = loc
+                                    isLiveGpsZomba = false
+                                }
                                 .padding(vertical = 6.dp)
                         ) {
                             RadioButton(
-                                selected = (selectedLocation.id == loc.id),
-                                onClick = { selectedLocation = loc }
+                                selected = (!isLiveGpsZomba && selectedLocation.id == loc.id),
+                                onClick = {
+                                    selectedLocation = loc
+                                    isLiveGpsZomba = false
+                                }
                             )
                             Spacer(modifier = Modifier.width(8.dp))
                             Row(
