@@ -204,7 +204,8 @@ fun ItemDetailScreen(
                             selectedProcessor = selectedProcessor,
                             selectedWeight = selectedWeight,
                             quantity = quantity,
-                            unitPrice = unitPrice
+                            unitPrice = unitPrice,
+                            imageUrl = item.imageUrl
                         )
                         onAddToCart(cartItem)
                     },

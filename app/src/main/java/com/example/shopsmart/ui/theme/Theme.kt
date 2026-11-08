@@ -9,38 +9,38 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 
 private val LightColorScheme = lightColorScheme(
-    primary = ShopRed,
+    primary = ColorWarmAmber,         // #D97706
     onPrimary = SurfaceWhite,
-    primaryContainer = ShopButtercream,
-    onPrimaryContainer = TextDark,
-    secondary = ShopBlue,
-    onSecondary = SurfaceWhite,
-    secondaryContainer = ShopBlue.copy(alpha = 0.15f),
-    onSecondaryContainer = ShopBlue,
-    tertiary = ShopButtercream,
-    onTertiary = TextDark,
-    background = ShopButtercreamLight,
-    onBackground = TextDark,
+    primaryContainer = ColorSoftPeach,  // #F4D6B0
+    onPrimaryContainer = ColorNavyDeep,
+    secondary = ColorSkyCyan,         // #5BC0DE
+    onSecondary = ColorNavyDeep,
+    secondaryContainer = ColorSkyCyan.copy(alpha = 0.2f),
+    onSecondaryContainer = ColorNavyDeep,
+    tertiary = ColorSteelBlue,        // #3A506B
+    onTertiary = SurfaceWhite,
+    background = Color(0xFFF8F9FA),
+    onBackground = ColorNavyDeep,
     surface = SurfaceWhite,
-    onSurface = TextDark,
-    surfaceVariant = ShopButtercream,
-    onSurfaceVariant = TextDark
+    onSurface = ColorNavyDeep,
+    surfaceVariant = ColorSoftPeach.copy(alpha = 0.3f),
+    onSurfaceVariant = ColorNavyDeep
 )
 
 private val DarkColorScheme = darkColorScheme(
-    primary = ShopRed,
+    primary = ColorWarmAmber,         // #D97706
     onPrimary = SurfaceWhite,
-    primaryContainer = ShopRed.copy(alpha = 0.25f),
+    primaryContainer = ColorDarkSlate,  // #1C2541
     onPrimaryContainer = SurfaceWhite,
-    secondary = ShopBlue,
-    onSecondary = SurfaceWhite,
-    tertiary = ShopButtercream,
-    onTertiary = TextDark,
-    background = PrimaryBlack,
+    secondary = ColorSkyCyan,         // #5BC0DE
+    onSecondary = ColorNavyDeep,
+    tertiary = ColorSteelBlue,        // #3A506B
+    onTertiary = SurfaceWhite,
+    background = ColorNavyDeep,       // #0B132B
     onBackground = SurfaceWhite,
-    surface = Color(0xFF1E1E1E),
+    surface = ColorDarkSlate,         // #1C2541
     onSurface = SurfaceWhite,
-    surfaceVariant = Color(0xFF2C2C2E),
+    surfaceVariant = ColorSteelBlue,  // #3A506B
     onSurfaceVariant = SurfaceWhite
 )
 

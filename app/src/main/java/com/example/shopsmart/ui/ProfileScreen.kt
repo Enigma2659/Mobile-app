@@ -1,5 +1,7 @@
 package com.example.shopsmart.ui
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -17,10 +19,12 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
 import com.example.shopsmart.model.CITIES_DELIVERY_LOCATIONS
 import com.example.shopsmart.model.User
 
@@ -41,6 +45,14 @@ fun ProfileScreen(
     var selectedCategory by remember { mutableStateOf(user.category) }
     var profileImageUrl by remember { mutableStateOf(user.profileImageUrl) }
     var successMessage by remember { mutableStateOf<String?>(null) }
+
+    val profileGalleryLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri ->
+        if (uri != null) {
+            profileImageUrl = uri.toString()
+        }
+    }
 
     val categoriesList = listOf("Students", "Offices", "Families")
 
@@ -80,8 +92,12 @@ fun ProfileScreen(
                 contentAlignment = Alignment.Center
             ) {
                 if (profileImageUrl.isNotBlank()) {
-                    // If image URL is provided, display or fallback
-                    Text(text = "📷", fontSize = 32.sp)
+                    AsyncImage(
+                        model = profileImageUrl,
+                        contentDescription = "Profile Picture",
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop
+                    )
                 } else {
                     Icon(
                         imageVector = Icons.Default.Person,
@@ -153,8 +169,18 @@ fun ProfileScreen(
                         onValueChange = { profileImageUrl = it },
                         label = { Text("Profile Picture URL / Photo Path (optional)") },
                         modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(16.dp),
                         singleLine = true
                     )
+
+                    Button(
+                        onClick = { profileGalleryLauncher.launch("image/*") },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondaryContainer, contentColor = MaterialTheme.colorScheme.onSecondaryContainer)
+                    ) {
+                        Text("📁 Pick Profile Photo from Gallery", fontWeight = FontWeight.Bold)
+                    }
 
                     Spacer(modifier = Modifier.height(4.dp))
                     Text("Category / Persona", fontWeight = FontWeight.Bold, fontSize = 15.sp)

@@ -25,6 +25,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
 import com.example.shopsmart.model.CartItem
 import java.util.Locale
 
@@ -155,14 +156,25 @@ fun CartAndCheckoutScreen(
                                         horizontalArrangement = Arrangement.spacedBy(12.dp),
                                         verticalAlignment = Alignment.Top
                                     ) {
-                                        Image(
-                                            painter = painterResource(id = getDrawableRes(cartItem.itemId, cartItem.selectedProcessor, cartItem.itemTitle)),
-                                            contentDescription = cartItem.itemTitle,
-                                            modifier = Modifier
-                                                .size(60.dp)
-                                                .clip(RoundedCornerShape(8.dp)),
-                                            contentScale = ContentScale.Crop
-                                        )
+                                        if (cartItem.imageUrl.isNotBlank()) {
+                                            AsyncImage(
+                                                model = cartItem.imageUrl,
+                                                contentDescription = cartItem.itemTitle,
+                                                modifier = Modifier
+                                                    .size(60.dp)
+                                                    .clip(RoundedCornerShape(8.dp)),
+                                                contentScale = ContentScale.Crop
+                                            )
+                                        } else {
+                                            Image(
+                                                painter = painterResource(id = getDrawableRes(cartItem.itemId, cartItem.selectedProcessor, cartItem.itemTitle)),
+                                                contentDescription = cartItem.itemTitle,
+                                                modifier = Modifier
+                                                    .size(60.dp)
+                                                    .clip(RoundedCornerShape(8.dp)),
+                                                contentScale = ContentScale.Crop
+                                            )
+                                        }
 
                                         Column(
                                             modifier = Modifier.weight(1f),

@@ -16,6 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.shopsmart.model.ChatMessage
 import com.example.shopsmart.model.User
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
@@ -23,12 +24,7 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-data class ChatMessage(
-    val id: String = "",
-    val senderName: String = "",
-    val message: String = "",
-    val timestamp: Long = System.currentTimeMillis()
-)
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

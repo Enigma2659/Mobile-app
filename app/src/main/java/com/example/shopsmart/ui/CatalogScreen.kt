@@ -473,7 +473,8 @@ fun CatalogItemRow(
                         selectedProcessor = selectedProcessor,
                         selectedWeight = selectedWeight,
                         quantity = quantity,
-                        unitPrice = currentUnitPrice
+                        unitPrice = currentUnitPrice,
+                        imageUrl = shopItem.imageUrl
                     )
                     onAddToCart(cartItem)
                     addedFeedback = true
