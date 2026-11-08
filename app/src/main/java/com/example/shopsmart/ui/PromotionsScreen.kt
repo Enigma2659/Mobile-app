@@ -294,7 +294,8 @@ fun PromotionCardItem(
                             selectedProcessor = promotion.selectedProcessor,
                             selectedWeight = promotion.selectedWeight,
                             quantity = quantity,
-                            unitPrice = promotion.newPrice
+                            unitPrice = promotion.newPrice,
+                            imageUrl = promotion.imageUrl
                         )
                         onAddToCart(cartItem)
                         addedFeedback = true

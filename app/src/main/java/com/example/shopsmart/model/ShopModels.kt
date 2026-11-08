@@ -52,7 +52,8 @@ data class CartItem(
     val selectedProcessor: String,
     val selectedWeight: String,
     val quantity: Int,
-    val unitPrice: Double
+    val unitPrice: Double,
+    val imageUrl: String = ""
 ) {
     val totalPrice: Double get() = unitPrice * quantity
 }
@@ -450,3 +451,10 @@ fun generateSmartBudgetPlan(
 
     return recommendedList
 }
+
+data class ChatMessage(
+    val id: String = "",
+    val senderName: String = "",
+    val message: String = "",
+    val timestamp: Long = System.currentTimeMillis()
+)

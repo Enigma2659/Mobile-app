@@ -17,7 +17,11 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.AdminPanelSettings
 import androidx.compose.material.icons.filled.Assessment
+import androidx.compose.material.icons.filled.Chat
 import androidx.compose.material.icons.filled.Delete
+import com.example.shopsmart.model.ChatMessage
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.Query
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Inventory
 import androidx.compose.material.icons.filled.People
@@ -99,6 +103,25 @@ fun AdminPanelScreen(
     var adminUpdateMsg by remember { mutableStateOf<String?>(null) }
     var adminCityLocations by remember { mutableStateOf(CITIES_DELIVERY_LOCATIONS[adminUser.city] ?: CITIES_DELIVERY_LOCATIONS["Lilongwe"]!!) }
 
+    var supportMessages by remember { mutableStateOf(listOf<ChatMessage>()) }
+    val firestoreDb = FirebaseFirestore.getInstance()
+    LaunchedEffect(Unit) {
+        firestoreDb.collection("support_chats")
+            .orderBy("timestamp", Query.Direction.ASCENDING)
+            .addSnapshotListener { snapshot, _ ->
+                if (snapshot != null) {
+                    supportMessages = snapshot.documents.map { doc ->
+                        ChatMessage(
+                            id = doc.id,
+                            senderName = doc.getString("senderName") ?: "Customer",
+                            message = doc.getString("message") ?: "",
+                            timestamp = doc.getLong("timestamp") ?: System.currentTimeMillis()
+                        )
+                    }
+                }
+            }
+    }
+
     fun openAddDialog() {
         editingItem = null
         itemName = ""
@@ -124,67 +147,90 @@ fun AdminPanelScreen(
     if (showAddDialog) {
         AlertDialog(
             onDismissRequest = { showAddDialog = false },
-            title = { Text(if (editingItem == null) "Add Product & Upload Photo" else "Edit Product", fontWeight = FontWeight.Bold, fontSize = 16.sp) },
+            title = { Text(if (editingItem == null) "✨ Add New Product / Brand" else "✏️ Edit Product", fontWeight = FontWeight.Bold, fontSize = 18.sp) },
             text = {
                 Column(
                     modifier = Modifier.verticalScroll(rememberScrollState()),
-                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
+                    Text(
+                        text = "Fill in the product details clearly below. You can specify brands (e.g. Chicken, Beef) and sizes.",
+                        fontSize = 12.sp,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                    )
+
                     OutlinedTextField(
                         value = itemName,
                         onValueChange = { itemName = it },
-                        label = { Text("Product Name") },
-                        modifier = Modifier.fillMaxWidth()
+                        label = { Text("Product / Item Name *") },
+                        placeholder = { Text("e.g. Sausages or Rice") },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(16.dp),
+                        singleLine = true
                     )
                     OutlinedTextField(
                         value = itemPrice,
                         onValueChange = { itemPrice = it.filter { char -> char.isDigit() || char == '.' } },
-                        label = { Text("Base Price (MK)") },
-                        modifier = Modifier.fillMaxWidth()
+                        label = { Text("Base Price (MK) *") },
+                        placeholder = { Text("e.g. 3500") },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(16.dp),
+                        singleLine = true
                     )
                     OutlinedTextField(
                         value = itemProcessors,
                         onValueChange = { itemProcessors = it },
-                        label = { Text("Processors / Brands (comma separated)") },
-                        modifier = Modifier.fillMaxWidth()
+                        label = { Text("Brands / Types / Processors (comma separated)") },
+                        placeholder = { Text("e.g. Chicken, Beef, Pork") },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(16.dp),
+                        singleLine = true
                     )
                     OutlinedTextField(
                         value = itemWeights,
                         onValueChange = { itemWeights = it },
-                        label = { Text("Weights / Sizes (comma separated)") },
-                        modifier = Modifier.fillMaxWidth()
+                        label = { Text("Sizes / Weights (comma separated)") },
+                        placeholder = { Text("e.g. 500g, 1kg, 2kg") },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(16.dp),
+                        singleLine = true
                     )
                     OutlinedTextField(
                         value = itemImageUrl,
                         onValueChange = { itemImageUrl = it },
-                        label = { Text("Item Photo (URL or Gallery Uri)") },
-                        modifier = Modifier.fillMaxWidth()
+                        label = { Text("Product Image URL (optional)") },
+                        placeholder = { Text("https://...") },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(16.dp),
+                        singleLine = true
                     )
 
                     Button(
                         onClick = { galleryLauncher.launch("image/*") },
                         modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(16.dp),
                         colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondaryContainer, contentColor = MaterialTheme.colorScheme.onSecondaryContainer)
                     ) {
                         Text("📁 Pick Photo from Gallery", fontWeight = FontWeight.Bold)
                     }
 
                     if (editingItem == null) {
-                        Text("Select Category:", fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text("Select Category / Department:", fontWeight = FontWeight.Bold, fontSize = 14.sp)
                         categories.forEach { cat ->
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .clickable { selectedCatId = cat.id }
-                                    .padding(4.dp)
+                                    .padding(vertical = 4.dp)
                             ) {
                                 RadioButton(
                                     selected = (selectedCatId == cat.id),
                                     onClick = { selectedCatId = cat.id }
                                 )
                                 Spacer(modifier = Modifier.width(8.dp))
-                                Text(cat.name, fontSize = 14.sp)
+                                Text(cat.name, fontSize = 14.sp, fontWeight = FontWeight.Medium)
                             }
                         }
                     }
@@ -302,6 +348,12 @@ fun AdminPanelScreen(
                         onClick = { selectedTab = 4 },
                         text = { Text("My Profile") },
                         icon = { Icon(Icons.Default.Person, contentDescription = null) }
+                    )
+                    Tab(
+                        selected = selectedTab == 5,
+                        onClick = { selectedTab = 5 },
+                        text = { Text("Support (${supportMessages.size})") },
+                        icon = { Icon(Icons.Default.Chat, contentDescription = null) }
                     )
                 }
             }
@@ -674,6 +726,46 @@ fun AdminPanelScreen(
                                     modifier = Modifier.fillMaxWidth().height(48.dp)
                                 ) {
                                     Text("Save Admin Profile", fontWeight = FontWeight.Bold)
+                                }
+                            }
+                        }
+                    }
+                }
+
+                5 -> {
+                    // --- SUPPORT MESSAGES TAB ---
+                    Column(
+                        modifier = Modifier.fillMaxSize(),
+                        verticalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        Text("Customer Support Messages", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = MaterialTheme.colorScheme.primary)
+                        if (supportMessages.isEmpty()) {
+                            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                                Text("No support messages from customers yet.", color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
+                            }
+                        } else {
+                            LazyColumn(
+                                modifier = Modifier.fillMaxSize(),
+                                verticalArrangement = Arrangement.spacedBy(10.dp)
+                            ) {
+                                items(supportMessages) { msg ->
+                                    Card(
+                                        shape = RoundedCornerShape(12.dp),
+                                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+                                    ) {
+                                        Column(modifier = Modifier.padding(14.dp)) {
+                                            Row(
+                                                modifier = Modifier.fillMaxWidth(),
+                                                horizontalArrangement = Arrangement.SpaceBetween
+                                            ) {
+                                                Text(text = "From: ${msg.senderName}", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = MaterialTheme.colorScheme.primary)
+                                                val timeStr = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault()).format(Date(msg.timestamp))
+                                                Text(text = timeStr, fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
+                                            }
+                                            Spacer(modifier = Modifier.height(4.dp))
+                                            Text(text = msg.message, fontSize = 14.sp)
+                                        }
+                                    }
                                 }
                             }
                         }

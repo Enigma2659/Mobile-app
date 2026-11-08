@@ -1,5 +1,6 @@
 package com.example.shopsmart.ui
 
+import android.content.Context
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -19,6 +20,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -42,8 +44,10 @@ fun AuthScreen(
     onAdminLoginSuccess: () -> Unit
 ) {
     val coroutineScope = rememberCoroutineScope()
+    val context = LocalContext.current
     var isSignUpMode by remember { mutableStateOf(false) }
     var showAdminLoginDialog by remember { mutableStateOf(false) }
+    var rememberMe by remember { mutableStateOf(false) }
 
     // Login Form State (Email & Password Only)
     var loginEmail by remember { mutableStateOf("") }
@@ -283,6 +287,46 @@ fun AuthScreen(
                             shape = RoundedCornerShape(10.dp)
                         )
 
+                        Column(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable { rememberMe = !rememberMe }
+                                    .padding(vertical = 4.dp)
+                            ) {
+                                Checkbox(
+                                    checked = rememberMe,
+                                    onCheckedChange = { rememberMe = it }
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text("Remember Me (Keep me signed in)", fontSize = 13.sp, fontWeight = FontWeight.Medium)
+                            }
+
+                            TextButton(
+                                onClick = {
+                                    val emailStr = loginEmail.trim()
+                                    if (emailStr.isBlank()) {
+                                        loginErrorMessage = "Please enter your Email Address above first to reset your password."
+                                        return@TextButton
+                                    }
+                                    FirebaseAuth.getInstance().sendPasswordResetEmail(emailStr)
+                                        .addOnSuccessListener {
+                                            loginErrorMessage = "Password reset email sent to $emailStr. Check your inbox!"
+                                        }
+                                        .addOnFailureListener { e ->
+                                            loginErrorMessage = "Reset error: ${e.localizedMessage}"
+                                        }
+                                },
+                                modifier = Modifier.align(Alignment.End)
+                            ) {
+                                Text("Forgot Password?", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                            }
+                        }
+
                         if (loginErrorMessage != null) {
                             Text(
                                 text = loginErrorMessage!!,
@@ -327,7 +371,13 @@ fun AuthScreen(
                                                             deliveryLocationName = doc.getString("deliveryLocationName") ?: "Biwi",
                                                             category = doc.getString("category") ?: "Students"
                                                         )
-                                                        onLoginSuccess(loggedInUser)
+                                                        val prefs = context.getSharedPreferences("ShopSimplePrefs", Context.MODE_PRIVATE)
+                                                if (rememberMe) {
+                                                    prefs.edit().putString("remembered_email", emailStr).apply()
+                                                } else {
+                                                    prefs.edit().remove("remembered_email").apply()
+                                                }
+                                                onLoginSuccess(loggedInUser)
                                                     } else {
                                                         val loggedInUser = User(
                                                             id = uid,
@@ -341,7 +391,13 @@ fun AuthScreen(
                                                             deliveryLocationName = "Biwi",
                                                             category = "Students"
                                                         )
-                                                        onLoginSuccess(loggedInUser)
+                                                        val prefs = context.getSharedPreferences("ShopSimplePrefs", Context.MODE_PRIVATE)
+                                                if (rememberMe) {
+                                                    prefs.edit().putString("remembered_email", emailStr).apply()
+                                                } else {
+                                                    prefs.edit().remove("remembered_email").apply()
+                                                }
+                                                onLoginSuccess(loggedInUser)
                                                     }
                                                 }
                                                 .addOnFailureListener {
@@ -358,7 +414,13 @@ fun AuthScreen(
                                                         deliveryLocationName = "Biwi",
                                                         category = "Students"
                                                     )
-                                                    onLoginSuccess(loggedInUser)
+                                                    val prefs = context.getSharedPreferences("ShopSimplePrefs", Context.MODE_PRIVATE)
+                                                if (rememberMe) {
+                                                    prefs.edit().putString("remembered_email", emailStr).apply()
+                                                } else {
+                                                    prefs.edit().remove("remembered_email").apply()
+                                                }
+                                                onLoginSuccess(loggedInUser)
                                                 }
                                         } else {
                                             isLoginSubmitting = false
