@@ -16,6 +16,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.AdminPanelSettings
+import androidx.compose.material.icons.filled.Assessment
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Inventory
@@ -293,6 +294,12 @@ fun AdminPanelScreen(
                     Tab(
                         selected = selectedTab == 3,
                         onClick = { selectedTab = 3 },
+                        text = { Text("Analytics") },
+                        icon = { Icon(Icons.Default.Assessment, contentDescription = null) }
+                    )
+                    Tab(
+                        selected = selectedTab == 4,
+                        onClick = { selectedTab = 4 },
                         text = { Text("My Profile") },
                         icon = { Icon(Icons.Default.Person, contentDescription = null) }
                     )
@@ -481,6 +488,84 @@ fun AdminPanelScreen(
                 }
 
                 3 -> {
+                    // --- ANALYTICS & DISTRICT DEMAND INSIGHTS ---
+                    val totalRevenue = orders.sumOf { order -> order.grandTotal }
+                    val locationCounts = orders.groupBy { it.deliveryLocation.name }.mapValues { entry -> entry.value.sumOf { it.grandTotal } }
+
+                    val productSalesCount = mutableMapOf<String, Int>()
+                    orders.forEach { order ->
+                        order.items.forEach { cartItem ->
+                            productSalesCount[cartItem.itemTitle] = (productSalesCount[cartItem.itemTitle] ?: 0) + cartItem.quantity
+                        }
+                    }
+
+                    LazyColumn(
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        item {
+                            Card(
+                                modifier = Modifier.fillMaxWidth(),
+                                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
+                            ) {
+                                Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                                    Text("📊 District & Persona Sales Insights", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = MaterialTheme.colorScheme.primary)
+                                    Text("Compare district demand, popular grocery items, and student vs family vs office purchasing trends across Malawi.", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f))
+                                    Spacer(modifier = Modifier.height(4.dp))
+                                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                                        Text("Total Orders: ${orders.size}", fontWeight = FontWeight.Bold)
+                                        Text("Total Revenue: MK${String.format(Locale.getDefault(), "%.2f", totalRevenue)}", fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.primary)
+                                    }
+                                }
+                            }
+                        }
+
+                        item {
+                            Text("📍 Demand by District / Delivery Area", fontWeight = FontWeight.Bold, fontSize = 15.sp)
+                        }
+
+                        if (locationCounts.isEmpty()) {
+                            item {
+                                Text("No order location data recorded yet.", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
+                            }
+                        } else {
+                            items(locationCounts.entries.toList()) { entry ->
+                                Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)) {
+                                    Row(modifier = Modifier.padding(14.dp).fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                                        Column {
+                                            Text(text = "Area: ${entry.key}", fontWeight = FontWeight.Bold, fontSize = 15.sp)
+                                            Text(text = "High buying demand registered", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
+                                        }
+                                        Text(text = "MK${String.format(Locale.getDefault(), "%.2f", entry.value)}", fontWeight = FontWeight.ExtraBold, fontSize = 15.sp, color = MaterialTheme.colorScheme.primary)
+                                    }
+                                }
+                            }
+                        }
+
+                        item {
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text("🛒 Top Selling Items (Rice vs Sugar vs Oil)", fontWeight = FontWeight.Bold, fontSize = 15.sp)
+                        }
+
+                        if (productSalesCount.isEmpty()) {
+                            item {
+                                Text("No item sales recorded yet.", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
+                            }
+                        } else {
+                            items(productSalesCount.entries.sortedByDescending { it.value }.toList()) { entry ->
+                                Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)) {
+                                    Row(modifier = Modifier.padding(14.dp).fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                                        Text(text = entry.key, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                                        Surface(shape = RoundedCornerShape(8.dp), color = MaterialTheme.colorScheme.primaryContainer) {
+                                            Text(text = "${entry.value} units sold", modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp), fontWeight = FontWeight.Bold, fontSize = 12.sp, color = MaterialTheme.colorScheme.primary)
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                4 -> {
                     // --- ADMIN PROFILE TAB ---
                     Column(
                         modifier = Modifier

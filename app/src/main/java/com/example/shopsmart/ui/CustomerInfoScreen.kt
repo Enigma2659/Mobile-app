@@ -78,7 +78,8 @@ fun CustomerInfoScreen(
                 .padding(padding)
                 .background(MaterialTheme.colorScheme.background)
                 .verticalScroll(rememberScrollState())
-                .padding(16.dp),
+                .padding(16.dp)
+                .imePadding(),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Text(
@@ -101,6 +102,7 @@ fun CustomerInfoScreen(
                         onValueChange = { firstName = it },
                         label = { Text("First Name *") },
                         modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(16.dp),
                         singleLine = true
                     )
 
@@ -109,6 +111,7 @@ fun CustomerInfoScreen(
                         onValueChange = { lastName = it },
                         label = { Text("Last Name *") },
                         modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(16.dp),
                         singleLine = true
                     )
                 }
@@ -266,6 +269,19 @@ fun CustomerInfoScreen(
                 }
             }
 
+            if (selectedLocation.distanceKm > 15.0) {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.4f)),
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.error.copy(alpha = 0.5f))
+                ) {
+                    Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Text("⚠️ Extended Delivery Radius Warning", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = MaterialTheme.colorScheme.error)
+                        Text("This delivery location is ${selectedLocation.distanceKm} km away (> 15 km radius). Standard delivery may take an additional 30–45 minutes.", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f))
+                    }
+                }
+            }
+
             if (errorMessage != null) {
                 Text(
                     text = errorMessage!!,
@@ -298,6 +314,8 @@ fun CustomerInfoScreen(
                     fontSize = 16.sp
                 )
             }
+
+            Spacer(modifier = Modifier.height(250.dp))
         }
     }
 }

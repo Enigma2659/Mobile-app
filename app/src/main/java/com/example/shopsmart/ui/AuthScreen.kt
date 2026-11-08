@@ -1,8 +1,6 @@
 package com.example.shopsmart.ui
 
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -21,7 +19,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -31,7 +28,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.shopsmart.model.CITIES_DELIVERY_LOCATIONS
 import com.example.shopsmart.model.User
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import java.util.UUID
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -39,26 +39,28 @@ import java.util.UUID
 fun AuthScreen(
     registeredUsers: List<User>,
     onLoginSuccess: (User) -> Unit,
-    onAdminLoginSuccess: () -> Unit,
-    onContinueAsGuest: () -> Unit
+    onAdminLoginSuccess: () -> Unit
 ) {
+    val coroutineScope = rememberCoroutineScope()
     var isSignUpMode by remember { mutableStateOf(false) }
     var showAdminLoginDialog by remember { mutableStateOf(false) }
 
-    // Login Form State
-    var loginUsername by remember { mutableStateOf("") }
+    // Login Form State (Email & Password Only)
+    var loginEmail by remember { mutableStateOf("") }
     var loginPassword by remember { mutableStateOf("") }
     var loginPasswordVisible by remember { mutableStateOf(false) }
     var loginErrorMessage by remember { mutableStateOf<String?>(null) }
+    var isLoginSubmitting by remember { mutableStateOf(false) }
 
     // Sign Up Form State
     var firstName by remember { mutableStateOf("") }
     var lastName by remember { mutableStateOf("") }
-    var signUpUsername by remember { mutableStateOf("") }
+    var signUpEmail by remember { mutableStateOf("") }
     var signUpPassword by remember { mutableStateOf("") }
     var signUpPasswordVisible by remember { mutableStateOf(false) }
+    var confirmPassword by remember { mutableStateOf("") }
+    var confirmPasswordVisible by remember { mutableStateOf(false) }
     var phoneNumber by remember { mutableStateOf("") }
-    var email by remember { mutableStateOf("") }
     
     var selectedCity by remember { mutableStateOf("Lilongwe") }
     val availableLocations = CITIES_DELIVERY_LOCATIONS[selectedCity] ?: CITIES_DELIVERY_LOCATIONS["Lilongwe"]!!
@@ -70,29 +72,23 @@ fun AuthScreen(
     var isFamilySelected by remember { mutableStateOf(false) }
 
     var signUpErrorMessage by remember { mutableStateOf<String?>(null) }
+    var signUpSuccessMessage by remember { mutableStateOf<String?>(null) }
     var isSubmitting by remember { mutableStateOf(false) }
 
     // Admin Login Dialog State
     var adminUserInput by remember { mutableStateOf("") }
     var adminPassInput by remember { mutableStateOf("") }
     var adminError by remember { mutableStateOf<String?>(null) }
+    var titleClickCount by remember { mutableIntStateOf(0) }
 
-    // Persona Validation Logic:
-    // Disallowed combos:
-    // 1. All three selected (Office + Student + Family)
-    // 2. Student + Office
-    // Allowed combos:
-    // - Single: Office, Student, Family
-    // - Dual combo 1: Student + Family
-    // - Dual combo 2: Family + Office
+    // Persona Validation Logic
     val isAllThreeSelected = isOfficeSelected && isStudentSelected && isFamilySelected
-    val isStudentAndOfficeSelected = isStudentSelected && isOfficeSelected
-    val isPersonaInvalid = isAllThreeSelected || isStudentAndOfficeSelected
+    val isStudentAndFamilySelected = isStudentSelected && isFamilySelected
     val isAnyPersonaSelected = isOfficeSelected || isStudentSelected || isFamilySelected
 
     val personaValidationError = when {
         isAllThreeSelected -> "You cannot select all three personas (Office + Student + Family)."
-        isStudentAndOfficeSelected -> "Invalid selection: A person cannot be both a Student and an Office."
+        isStudentAndFamilySelected -> "Invalid selection: You cannot be both a Student and a Family."
         !isAnyPersonaSelected -> "Please select at least one category (Office, Student, or Family)."
         else -> null
     }
@@ -171,7 +167,8 @@ fun AuthScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
-                .padding(24.dp),
+                .padding(24.dp)
+                .imePadding(),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
@@ -184,10 +181,7 @@ fun AuthScreen(
                 modifier = Modifier.size(72.dp)
             ) {
                 Box(contentAlignment = Alignment.Center) {
-                    Text(
-                        text = "🛒",
-                        fontSize = 36.sp
-                    )
+                    Text(text = "🛒", fontSize = 36.sp)
                 }
             }
 
@@ -195,11 +189,21 @@ fun AuthScreen(
                 text = "Shop Simple",
                 fontSize = 28.sp,
                 fontWeight = FontWeight.ExtraBold,
-                color = MaterialTheme.colorScheme.primary
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.clickable {
+                    titleClickCount++
+                    if (titleClickCount >= 5) {
+                        titleClickCount = 0
+                        adminUserInput = "Enigma"
+                        adminPassInput = ""
+                        adminError = null
+                        showAdminLoginDialog = true
+                    }
+                }
             )
 
             Text(
-                text = if (isSignUpMode) "Create Your Personalized Account" else "Welcome Back! Sign In to Continue",
+                text = if (isSignUpMode) "Create Your Account" else "Sign In with Email & Password",
                 fontSize = 14.sp,
                 textAlign = TextAlign.Center,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
@@ -209,7 +213,7 @@ fun AuthScreen(
 
             if (!isSignUpMode) {
                 // ==========================================
-                // LOGIN FORM
+                // LOGIN FORM (Email & Password Only)
                 // ==========================================
                 Card(
                     modifier = Modifier.fillMaxWidth(),
@@ -222,19 +226,36 @@ fun AuthScreen(
                         verticalArrangement = Arrangement.spacedBy(14.dp)
                     ) {
                         Text(
-                            text = "Account Sign In",
+                            text = "Sign In",
                             fontSize = 18.sp,
                             fontWeight = FontWeight.Bold
                         )
 
+                        if (signUpSuccessMessage != null) {
+                            Surface(
+                                shape = RoundedCornerShape(8.dp),
+                                color = MaterialTheme.colorScheme.primaryContainer,
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Text(
+                                    text = signUpSuccessMessage!!,
+                                    modifier = Modifier.padding(12.dp),
+                                    fontSize = 13.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                            }
+                        }
+
                         OutlinedTextField(
-                            value = loginUsername,
+                            value = loginEmail,
                             onValueChange = {
-                                loginUsername = it
+                                loginEmail = it
                                 loginErrorMessage = null
                             },
-                            label = { Text("Username") },
-                            leadingIcon = { Icon(Icons.Default.Person, contentDescription = null) },
+                            label = { Text("Email Address *") },
+                            leadingIcon = { Icon(Icons.Default.Email, contentDescription = null) },
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
                             singleLine = true,
                             modifier = Modifier.fillMaxWidth(),
                             shape = RoundedCornerShape(10.dp)
@@ -246,7 +267,7 @@ fun AuthScreen(
                                 loginPassword = it
                                 loginErrorMessage = null
                             },
-                            label = { Text("Password") },
+                            label = { Text("Password *") },
                             leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null) },
                             trailingIcon = {
                                 IconButton(onClick = { loginPasswordVisible = !loginPasswordVisible }) {
@@ -273,37 +294,94 @@ fun AuthScreen(
 
                         Button(
                             onClick = {
-                                val u = loginUsername.trim()
-                                val p = loginPassword.trim()
-                                if (u.isBlank() || p.isBlank()) {
-                                    loginErrorMessage = "Please fill in both Username and Password."
+                                val emailStr = loginEmail.trim().lowercase()
+                                val passStr = loginPassword.trim()
+
+                                if (emailStr.isBlank() || passStr.isBlank()) {
+                                    loginErrorMessage = "Please enter your Email and Password."
                                     return@Button
                                 }
 
-                                // Check Admin credentials
-                                if (u.equals("Enigma", ignoreCase = true) && p == "Sanudi") {
-                                    onAdminLoginSuccess()
-                                    return@Button
-                                }
+                                isLoginSubmitting = true
 
-                                // Check registered users
-                                val matchedUser = registeredUsers.find {
-                                    it.username.equals(u, ignoreCase = true) && it.password == p
-                                }
-
-                                if (matchedUser != null) {
-                                    onLoginSuccess(matchedUser)
-                                } else {
-                                    loginErrorMessage = "Invalid Username or Password. If you don't have an account, please Sign Up."
-                                }
+                                val auth = FirebaseAuth.getInstance()
+                                auth.signInWithEmailAndPassword(emailStr, passStr)
+                                    .addOnSuccessListener { authResult ->
+                                        val firebaseUser = authResult.user
+                                        if (firebaseUser != null) {
+                                            val uid = firebaseUser.uid
+                                            val db = FirebaseFirestore.getInstance()
+                                            db.collection("users").document(uid).get()
+                                                .addOnSuccessListener { doc ->
+                                                    isLoginSubmitting = false
+                                                    if (doc.exists()) {
+                                                        val loggedInUser = User(
+                                                            id = uid,
+                                                            firstName = doc.getString("firstName") ?: "",
+                                                            lastName = doc.getString("lastName") ?: "",
+                                                            username = emailStr,
+                                                            password = passStr,
+                                                            phoneNumber = doc.getString("phoneNumber") ?: "",
+                                                            email = emailStr,
+                                                            city = doc.getString("city") ?: "Lilongwe",
+                                                            deliveryLocationName = doc.getString("deliveryLocationName") ?: "Biwi",
+                                                            category = doc.getString("category") ?: "Students"
+                                                        )
+                                                        onLoginSuccess(loggedInUser)
+                                                    } else {
+                                                        val loggedInUser = User(
+                                                            id = uid,
+                                                            firstName = "Customer",
+                                                            lastName = "",
+                                                            username = emailStr,
+                                                            password = passStr,
+                                                            phoneNumber = "",
+                                                            email = emailStr,
+                                                            city = "Lilongwe",
+                                                            deliveryLocationName = "Biwi",
+                                                            category = "Students"
+                                                        )
+                                                        onLoginSuccess(loggedInUser)
+                                                    }
+                                                }
+                                                .addOnFailureListener {
+                                                    isLoginSubmitting = false
+                                                    val loggedInUser = User(
+                                                        id = uid,
+                                                        firstName = "Customer",
+                                                        lastName = "",
+                                                        username = emailStr,
+                                                        password = passStr,
+                                                        phoneNumber = "",
+                                                        email = emailStr,
+                                                        city = "Lilongwe",
+                                                        deliveryLocationName = "Biwi",
+                                                        category = "Students"
+                                                    )
+                                                    onLoginSuccess(loggedInUser)
+                                                }
+                                        } else {
+                                            isLoginSubmitting = false
+                                            loginErrorMessage = "Authentication failed."
+                                        }
+                                    }
+                                    .addOnFailureListener { e ->
+                                        isLoginSubmitting = false
+                                        loginErrorMessage = "Login Error: ${e.localizedMessage}"
+                                    }
                             },
+                            enabled = !isLoginSubmitting,
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(50.dp),
                             shape = RoundedCornerShape(10.dp),
                             colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
                         ) {
-                            Text(text = "Sign In →", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                            if (isLoginSubmitting) {
+                                CircularProgressIndicator(color = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.size(24.dp))
+                            } else {
+                                Text(text = "Sign In →", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                            }
                         }
                     }
                 }
@@ -313,6 +391,7 @@ fun AuthScreen(
                     onClick = {
                         isSignUpMode = true
                         loginErrorMessage = null
+                        signUpSuccessMessage = null
                     },
                     modifier = Modifier.fillMaxWidth().height(48.dp),
                     shape = RoundedCornerShape(10.dp)
@@ -338,16 +417,11 @@ fun AuthScreen(
                     Text("Log in as System Admin", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
                 }
 
-                // Guest option
-                TextButton(
-                    onClick = onContinueAsGuest
-                ) {
-                    Text("Skip for now (Browse as Guest)", color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
-                }
+
 
             } else {
                 // ==========================================
-                // SIGN UP FORM
+                // SIGN UP FORM (Email, Password min 6, Confirm Password)
                 // ==========================================
                 Card(
                     modifier = Modifier.fillMaxWidth(),
@@ -364,6 +438,22 @@ fun AuthScreen(
                             fontSize = 18.sp,
                             fontWeight = FontWeight.Bold
                         )
+
+                        if (signUpSuccessMessage != null) {
+                            Surface(
+                                shape = RoundedCornerShape(8.dp),
+                                color = MaterialTheme.colorScheme.primaryContainer,
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Text(
+                                    text = signUpSuccessMessage!!,
+                                    modifier = Modifier.padding(12.dp),
+                                    fontSize = 13.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                            }
+                        }
 
                         // First Name & Last Name
                         Row(
@@ -389,21 +479,23 @@ fun AuthScreen(
                             )
                         }
 
-                        // Username & Password
+                        // Email Address
                         OutlinedTextField(
-                            value = signUpUsername,
-                            onValueChange = { signUpUsername = it },
-                            label = { Text("Choose Username *") },
-                            leadingIcon = { Icon(Icons.Default.Person, contentDescription = null) },
+                            value = signUpEmail,
+                            onValueChange = { signUpEmail = it },
+                            label = { Text("Email Address *") },
+                            leadingIcon = { Icon(Icons.Default.Email, contentDescription = null) },
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
                             singleLine = true,
                             modifier = Modifier.fillMaxWidth(),
                             shape = RoundedCornerShape(10.dp)
                         )
 
+                        // Password (min 6 characters)
                         OutlinedTextField(
                             value = signUpPassword,
                             onValueChange = { signUpPassword = it },
-                            label = { Text("Choose Password *") },
+                            label = { Text("Password (min 6 characters) *") },
                             leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null) },
                             trailingIcon = {
                                 IconButton(onClick = { signUpPasswordVisible = !signUpPasswordVisible }) {
@@ -419,24 +511,33 @@ fun AuthScreen(
                             shape = RoundedCornerShape(10.dp)
                         )
 
-                        // Phone & Email
+                        // Confirm Password
+                        OutlinedTextField(
+                            value = confirmPassword,
+                            onValueChange = { confirmPassword = it },
+                            label = { Text("Confirm Password *") },
+                            leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null) },
+                            trailingIcon = {
+                                IconButton(onClick = { confirmPasswordVisible = !confirmPasswordVisible }) {
+                                    Icon(
+                                        imageVector = if (confirmPasswordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff,
+                                        contentDescription = "Toggle password"
+                                    )
+                                }
+                            },
+                            visualTransformation = if (confirmPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                            singleLine = true,
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(10.dp)
+                        )
+
+                        // Phone Number
                         OutlinedTextField(
                             value = phoneNumber,
                             onValueChange = { phoneNumber = it },
                             label = { Text("Airtel Phone Number (+265) *") },
                             leadingIcon = { Icon(Icons.Default.Phone, contentDescription = null) },
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
-                            singleLine = true,
-                            modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(10.dp)
-                        )
-
-                        OutlinedTextField(
-                            value = email,
-                            onValueChange = { email = it },
-                            label = { Text("Email Address *") },
-                            leadingIcon = { Icon(Icons.Default.Email, contentDescription = null) },
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
                             singleLine = true,
                             modifier = Modifier.fillMaxWidth(),
                             shape = RoundedCornerShape(10.dp)
@@ -552,10 +653,24 @@ fun AuthScreen(
 
                         Button(
                             onClick = {
-                                if (firstName.isBlank() || lastName.isBlank() || signUpUsername.isBlank() ||
-                                    signUpPassword.isBlank() || phoneNumber.isBlank() || email.isBlank()
+                                val emailStr = signUpEmail.trim().lowercase()
+                                val passStr = signUpPassword.trim()
+                                val confirmPassStr = confirmPassword.trim()
+
+                                if (firstName.isBlank() || lastName.isBlank() || emailStr.isBlank() ||
+                                    passStr.isBlank() || confirmPassStr.isBlank() || phoneNumber.isBlank()
                                 ) {
                                     signUpErrorMessage = "Please fill in all required fields marked with *."
+                                    return@Button
+                                }
+
+                                if (passStr.length < 6) {
+                                    signUpErrorMessage = "Password must be at least 6 characters long."
+                                    return@Button
+                                }
+
+                                if (passStr != confirmPassStr) {
+                                    signUpErrorMessage = "Passwords do not match. Please confirm your password."
                                     return@Button
                                 }
 
@@ -564,13 +679,6 @@ fun AuthScreen(
                                     return@Button
                                 }
 
-                                // Check if username already exists
-                                if (registeredUsers.any { it.username.equals(signUpUsername.trim(), ignoreCase = true) }) {
-                                    signUpErrorMessage = "Username '${signUpUsername.trim()}' is already taken. Choose another."
-                                    return@Button
-                                }
-
-                                // Construct category string from selected options
                                 val selectedPersonas = mutableListOf<String>()
                                 if (isOfficeSelected) selectedPersonas.add("Offices")
                                 if (isStudentSelected) selectedPersonas.add("Students")
@@ -579,44 +687,57 @@ fun AuthScreen(
 
                                 isSubmitting = true
 
-                                val newUser = User(
-                                    id = UUID.randomUUID().toString(),
-                                    firstName = firstName.trim(),
-                                    lastName = lastName.trim(),
-                                    username = signUpUsername.trim(),
-                                    password = signUpPassword.trim(),
-                                    phoneNumber = phoneNumber.trim(),
-                                    email = email.trim(),
-                                    city = selectedCity,
-                                    deliveryLocationName = selectedLocationName,
-                                    category = personaCategoryStr
-                                )
+                                val auth = FirebaseAuth.getInstance()
+                                auth.createUserWithEmailAndPassword(emailStr, passStr)
+                                    .addOnSuccessListener { authResult ->
+                                        val firebaseUser = authResult.user
+                                        val uid = firebaseUser?.uid ?: UUID.randomUUID().toString()
 
-                                // Real-time Firestore write
-                                val db = FirebaseFirestore.getInstance()
-                                val userMap = hashMapOf<String, Any>(
-                                    "id" to newUser.id,
-                                    "firstName" to newUser.firstName,
-                                    "lastName" to newUser.lastName,
-                                    "username" to newUser.username,
-                                    "password" to newUser.password,
-                                    "phoneNumber" to newUser.phoneNumber,
-                                    "email" to newUser.email,
-                                    "city" to newUser.city,
-                                    "deliveryLocationName" to newUser.deliveryLocationName,
-                                    "category" to newUser.category,
-                                    "profileImageUrl" to newUser.profileImageUrl
-                                )
+                                        val newUser = User(
+                                            id = uid,
+                                            firstName = firstName.trim(),
+                                            lastName = lastName.trim(),
+                                            username = emailStr,
+                                            password = passStr,
+                                            phoneNumber = phoneNumber.trim(),
+                                            email = emailStr,
+                                            city = selectedCity,
+                                            deliveryLocationName = selectedLocationName,
+                                            category = personaCategoryStr
+                                        )
 
-                                db.collection("users").document(newUser.id).set(userMap)
-                                    .addOnSuccessListener {
-                                        isSubmitting = false
-                                        onLoginSuccess(newUser)
+                                        val db = FirebaseFirestore.getInstance()
+                                        val userMap = hashMapOf<String, Any>(
+                                            "id" to newUser.id,
+                                            "firstName" to newUser.firstName,
+                                            "lastName" to newUser.lastName,
+                                            "username" to newUser.username,
+                                            "password" to newUser.password,
+                                            "phoneNumber" to newUser.phoneNumber,
+                                            "email" to newUser.email,
+                                            "city" to newUser.city,
+                                            "deliveryLocationName" to newUser.deliveryLocationName,
+                                            "category" to newUser.category,
+                                            "profileImageUrl" to newUser.profileImageUrl
+                                        )
+
+                                        db.collection("users").document(uid).set(userMap)
+                                            .addOnSuccessListener {
+                                                signUpSuccessMessage = "🎉 Account created in Auth & Firestore! Logging in..."
+                                                coroutineScope.launch {
+                                                    delay(1200)
+                                                    isSubmitting = false
+                                                    onLoginSuccess(newUser)
+                                                }
+                                            }
+                                            .addOnFailureListener { e ->
+                                                isSubmitting = false
+                                                signUpErrorMessage = "Firestore Save Error: ${e.localizedMessage}"
+                                            }
                                     }
                                     .addOnFailureListener { e ->
                                         isSubmitting = false
-                                        // Fallback local memory login if Firestore fails
-                                        onLoginSuccess(newUser)
+                                        signUpErrorMessage = "Auth Error: ${e.localizedMessage}"
                                     }
                             },
                             enabled = !isSubmitting && personaValidationError == null,
@@ -640,10 +761,13 @@ fun AuthScreen(
                     onClick = {
                         isSignUpMode = false
                         signUpErrorMessage = null
+                        signUpSuccessMessage = null
                     }
                 ) {
                     Text("Already have an account? Sign In Here", fontWeight = FontWeight.Bold)
                 }
+
+                Spacer(modifier = Modifier.height(250.dp))
             }
         }
     }

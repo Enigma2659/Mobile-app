@@ -1,13 +1,13 @@
 {
   "project_info": {
-    "project_number": "966728486548",
-    "project_id": "shop-smart01",
-    "storage_bucket": "shop-smart01.firebasestorage.app"
+    "project_number": "748064797220",
+    "project_id": "shop-simple-01",
+    "storage_bucket": "shop-simple-01.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:966728486548:android:00c504aa5c21e89c8d6e81",
+        "mobilesdk_app_id": "1:748064797220:android:78a5b1bcd4bfc4bb385eb1",
         "android_client_info": {
           "package_name": "com.example.shopsmart"
         }
@@ -15,7 +15,7 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyCSh6ld7AyWiafupCkzI69x_psWa8SQkvg"
+          "current_key": "AIzaSyCx5IQppqQ4zn8sE9_Em0kehIqq70aISYE"
         }
       ],
       "services": {

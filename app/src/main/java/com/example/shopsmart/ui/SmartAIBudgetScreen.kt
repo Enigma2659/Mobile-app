@@ -375,7 +375,7 @@ fun SmartAIBudgetScreen(
                     modifier = Modifier.padding(end = 8.dp)
                 )
                 Text(
-                    text = "Calculate & Generate Smart Cart",
+                    text = "Generate Smart Cart",
                     fontWeight = FontWeight.Bold,
                     fontSize = 16.sp
                 )

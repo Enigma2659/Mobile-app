@@ -1,5 +1,6 @@
 package com.example.shopsmart.ui
 
+import android.content.Intent
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -7,10 +8,12 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -115,6 +118,28 @@ fun OrderSummaryScreen(
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)
                     )
                 }
+            }
+
+            // Share Receipt Button
+            val context = LocalContext.current
+            OutlinedButton(
+                onClick = {
+                    val shareText = "🛒 Shop Simple - Order Receipt\n\nOrder ID: $orderId\nCustomer: $firstName $lastName\nPhone: $phoneNumber\nLocation: ${deliveryLocation.name}\nTotal: MK${String.format(Locale.getDefault(), "%.2f", grandTotal)}\n\nThank you for shopping with us!"
+                    val intent = Intent().apply {
+                        action = Intent.ACTION_SEND
+                        putExtra(Intent.EXTRA_TEXT, shareText)
+                        type = "text/plain"
+                    }
+                    context.startActivity(Intent.createChooser(intent, "Share Order Receipt via"))
+                },
+                modifier = Modifier.fillMaxWidth().height(46.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Share,
+                    contentDescription = "Share",
+                    modifier = Modifier.padding(end = 8.dp)
+                )
+                Text("Share Receipt / Order Details (WhatsApp/SMS)", fontWeight = FontWeight.Bold)
             }
 
             // Important Collection Notice (2 hours)

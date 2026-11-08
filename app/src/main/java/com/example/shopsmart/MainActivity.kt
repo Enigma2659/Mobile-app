@@ -12,6 +12,7 @@ import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.automirrored.filled.ListAlt
 import androidx.compose.material.icons.automirrored.filled.ReceiptLong
 import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material.icons.filled.Chat
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Phone
@@ -52,6 +53,7 @@ enum class NavDestination(
     MY_CART("My Cart", Icons.Default.ShoppingCart),
     ORDERS_TRACKER("My Orders & Tracker", Icons.AutoMirrored.Filled.ReceiptLong),
     PROFILE("My Profile", Icons.Default.Person),
+    SUPPORT_CHAT("Support Chat", Icons.Default.Chat),
     CONTACT_US("Contact Us", Icons.Default.Phone),
     ABOUT_US("More About Us", Icons.Default.Info)
 }
@@ -77,7 +79,7 @@ class MainActivity : ComponentActivity() {
                 var adminUser by remember {
                     mutableStateOf(
                         User(
-                            firstName = "Enigma",
+                            firstName = "Enigma",      //ktor sqlite
                             lastName = "Sanudi",
                             username = "Enigma",
                             password = "Sanudi",
@@ -104,6 +106,18 @@ class MainActivity : ComponentActivity() {
                 // Real-time Firestore Listeners
                 LaunchedEffect(Unit) {
                     val db = FirebaseFirestore.getInstance()
+
+                    // Test Firestore connection & log existing users
+                    db.collection("users")
+                        .get()
+                        .addOnSuccessListener { result ->
+                            for (document in result) {
+                                Log.d("ShopSimpleDebug", "Firestore User => ${document.id}: ${document.data}")
+                            }
+                        }
+                        .addOnFailureListener { exception ->
+                            Log.w("ShopSimpleDebug", "Firestore error getting documents.", exception)
+                        }
 
                     // 1. Real-time Users Listener
                     db.collection("users").addSnapshotListener { snapshot, _ ->
@@ -186,21 +200,16 @@ class MainActivity : ComponentActivity() {
 
                 if (showSplash) {
                     SplashScreen(onSplashFinished = { showSplash = false })
-                } else if (currentUser == null && !isGuest && !isAdminLoggedIn) {
-                    // First Screen: Login & Sign Up Page
+                } else if (currentUser == null && !isAdminLoggedIn) {
+                    // First Screen: Login & Sign Up Page (Email & Password Only)
                     AuthScreen(
                         registeredUsers = registeredUsers,
                         onLoginSuccess = { user ->
                             currentUser = user
-                            isGuest = false
                             currentDestination = NavDestination.CATALOG
                         },
                         onAdminLoginSuccess = {
                             isAdminLoggedIn = true
-                        },
-                        onContinueAsGuest = {
-                            isGuest = true
-                            currentDestination = NavDestination.CATALOG
                         }
                     )
                 } else if (isAdminLoggedIn) {
@@ -573,6 +582,13 @@ class MainActivity : ComponentActivity() {
                                 NavDestination.ORDERS_TRACKER -> {
                                     OrdersTrackerScreen(
                                         onOpenDrawer = { scope.launch { drawerState.open() } },
+                                        onBack = { currentDestination = NavDestination.CATALOG }
+                                    )
+                                }
+
+                                NavDestination.SUPPORT_CHAT -> {
+                                    SupportChatScreen(
+                                        currentUser = currentUser,
                                         onBack = { currentDestination = NavDestination.CATALOG }
                                     )
                                 }
