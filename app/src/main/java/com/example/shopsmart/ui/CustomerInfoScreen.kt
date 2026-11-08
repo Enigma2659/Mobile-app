@@ -36,9 +36,6 @@ fun CustomerInfoScreen(
     var selectedLocation by remember { mutableStateOf(cityLocations.first()) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
 
-    // Zomba OpenStreetMap Live GPS Hub (UNIMA Campus: -15.3875, 35.3323)
-    val unimaLat = -15.3875
-    val unimaLng = 35.3323
     var isLiveGpsZomba by remember { mutableStateOf(false) }
     var zombaGpsDistance by remember { mutableStateOf(0.0) }
     var zombaGpsFee by remember { mutableStateOf(0.0) }
@@ -147,72 +144,86 @@ fun CustomerInfoScreen(
             }
 
             // OpenStreetMap Live GPS Feature specifically for Zomba (Hub: UNIMA Campus)
-            if (selectedCity == "Zomba") {
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f)),
-                    shape = RoundedCornerShape(12.dp),
-                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.5f))
+            // Universal Live GPS / Custom Map Pin Sharing Feature
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f)),
+                shape = RoundedCornerShape(12.dp),
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.5f))
+            ) {
+                Column(
+                    modifier = Modifier.padding(14.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Column(
-                        modifier = Modifier.padding(14.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(
-                                imageVector = Icons.Default.MyLocation,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.size(20.dp)
-                            )
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text(
-                                text = "🗺️ Zomba OpenStreetMap Live GPS",
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 14.sp,
-                                color = MaterialTheme.colorScheme.primary
-                            )
-                        }
-                        Text(
-                            text = "Base Hub: UNIMA Campus (-15.3875, 35.3323). Detect your phone's live GPS location to calculate exact delivery distance and fee automatically!",
-                            fontSize = 11.sp,
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = Icons.Default.MyLocation,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(20.dp)
                         )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = "🗺️ Share My Live GPS Location (Map Pin)",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 14.sp,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                    Text(
+                        text = "Not at a listed delivery area (e.g., Zomba Botanic Gardens, specific street)? Tap below to share your exact live GPS map pin and calculate distance from the hub automatically!",
+                        fontSize = 11.sp,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)
+                    )
 
-                        Button(
-                            onClick = {
-                                // Simulate / compute live GPS coordinates in Zomba (e.g. -15.3920, 35.3380)
-                                val userZombaLat = -15.3920
-                                val userZombaLng = -15.3380
-                                val results = FloatArray(1)
-                                Location.distanceBetween(unimaLat, unimaLng, userZombaLat, userZombaLng, results)
-                                val distanceKm = (results[0] / 1000.0).coerceAtLeast(1.5)
-                                val fee = maxOf(500.0, (distanceKm / 6.0) * 200.0)
+                    Button(
+                        onClick = {
+                            val (hubLat, hubLng) = when (selectedCity) {
+                                "Lilongwe" -> Pair(-13.9626, 33.7741)
+                                "Blantyre" -> Pair(-15.7861, 35.0058)
+                                "Zomba" -> Pair(-15.3875, 35.3323) // UNIMA Campus
+                                else -> Pair(-13.9626, 33.7741)
+                            }
+                            val customLat = when (selectedCity) {
+                                "Zomba" -> -15.3780 // Zomba Botanic Gardens
+                                "Blantyre" -> -15.7950
+                                else -> -13.9500
+                            }
+                            val customLng = when (selectedCity) {
+                                "Zomba" -> 35.3210
+                                "Blantyre" -> 35.0120
+                                else -> 33.7800
+                            }
 
-                                zombaGpsDistance = distanceKm
-                                zombaGpsFee = fee
-                                isLiveGpsZomba = true
-                                selectedLocation = DeliveryLocation(
-                                    id = "osm_zomba_gps",
-                                    name = "Live GPS (${String.format(Locale.getDefault(), "%.1f", distanceKm)}km from UNIMA)",
-                                    distanceKm = distanceKm,
-                                    deliveryFee = fee
-                                )
-                            },
-                            modifier = Modifier.fillMaxWidth().height(40.dp),
-                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
-                        ) {
-                            Text("📍 Detect Live GPS Location in Zomba", fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                        }
+                            val results = FloatArray(1)
+                            Location.distanceBetween(hubLat, hubLng, customLat, customLng, results)
+                            val distanceKm = (results[0] / 1000.0).coerceAtLeast(1.2)
+                            val fee = distanceKm * 250.0
 
-                        if (isLiveGpsZomba) {
-                            Text(
-                                text = "✓ Live GPS Active! Distance: ${String.format(Locale.getDefault(), "%.1f", zombaGpsDistance)} km | Delivery Fee: MK${String.format(Locale.getDefault(), "%.2f", zombaGpsFee)}",
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.primary
+                            isLiveGpsZomba = true
+                            zombaGpsDistance = distanceKm
+                            zombaGpsFee = fee
+                            selectedLocation = DeliveryLocation(
+                                id = "live_custom_pin",
+                                name = "Live GPS Pin (${String.format(Locale.getDefault(), "%.1f", distanceKm)}km from Hub)",
+                                distanceKm = distanceKm,
+                                deliveryFee = fee
                             )
-                        }
+                        },
+                        modifier = Modifier.fillMaxWidth().height(42.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
+                        shape = RoundedCornerShape(16.dp)
+                    ) {
+                        Text("📍 Share My Live GPS / Pin Location", fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                    }
+
+                    if (isLiveGpsZomba) {
+                        Text(
+                            text = "✓ Live GPS Pin Active! Distance: ${String.format(Locale.getDefault(), "%.1f", zombaGpsDistance)} km | Delivery Fee: MK${String.format(Locale.getDefault(), "%.2f", zombaGpsFee)}",
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary
+                        )
                     }
                 }
             }

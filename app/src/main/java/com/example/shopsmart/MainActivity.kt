@@ -6,6 +6,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.background
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
@@ -13,7 +14,9 @@ import androidx.compose.material.icons.automirrored.filled.ListAlt
 import androidx.compose.material.icons.automirrored.filled.ReceiptLong
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Chat
+import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material.icons.filled.ShoppingCart
@@ -22,6 +25,10 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.border
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -37,6 +44,7 @@ import com.example.shopsmart.model.User
 import com.example.shopsmart.ui.*
 import com.example.shopsmart.ui.theme.ShopSimpleTheme
 import com.google.firebase.firestore.FirebaseFirestore
+import coil.compose.AsyncImage
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
@@ -52,6 +60,7 @@ enum class NavDestination(
     SMART_AI("Smart AI Budget", Icons.Default.AutoAwesome),
     MY_CART("My Cart", Icons.Default.ShoppingCart),
     ORDERS_TRACKER("My Orders & Tracker", Icons.AutoMirrored.Filled.ReceiptLong),
+    WISHLIST("My Wishlist", Icons.Default.Favorite),
     PROFILE("My Profile", Icons.Default.Person),
     SUPPORT_CHAT("Support Chat", Icons.Default.Chat),
     CONTACT_US("Contact Us", Icons.Default.Phone),
@@ -69,7 +78,8 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            ShopSimpleTheme {
+            var isDarkTheme by remember { mutableStateOf(false) }
+            ShopSimpleTheme(darkTheme = isDarkTheme) {
                 var showSplash by remember { mutableStateOf(true) }
                 var currentUser by remember { mutableStateOf<User?>(null) }
                 var isAdminLoggedIn by remember { mutableStateOf(false) }
@@ -94,6 +104,22 @@ class MainActivity : ComponentActivity() {
 
                 var currentDestination by remember { mutableStateOf(NavDestination.CATALOG) }
                 var cartItems by remember { mutableStateOf(listOf<CartItem>()) }
+                var wishlistItems by remember { mutableStateOf(listOf<ShopItem>()) }
+                val context = LocalContext.current
+
+                // Remember Me auto-login check
+                LaunchedEffect(registeredUsers) {
+                    if (currentUser == null && !isAdminLoggedIn && !isGuest) {
+                        val prefs = context.getSharedPreferences("ShopSimplePrefs", MODE_PRIVATE)
+                        val savedEmail = prefs.getString("remembered_email", null)
+                        if (savedEmail != null) {
+                            val match = registeredUsers.find { it.email.trim().equals(savedEmail, true) }
+                            if (match != null) {
+                                currentUser = match
+                            }
+                        }
+                    }
+                }
                 var categoriesState by remember { mutableStateOf(SHOP_CATEGORIES) }
                 var activeOrder by remember { mutableStateOf<CompletedOrder?>(null) }
                 var selectedItemForDetail by remember { mutableStateOf<ShopItem?>(null) }
@@ -296,20 +322,66 @@ class MainActivity : ComponentActivity() {
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .background(MaterialTheme.colorScheme.primaryContainer)
-                                        .padding(24.dp)
+                                        .padding(20.dp)
                                 ) {
-                                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                                        Text(
-                                            text = "🛒 Shop Simple",
-                                            fontSize = 22.sp,
-                                            fontWeight = FontWeight.ExtraBold,
-                                            color = MaterialTheme.colorScheme.primary
-                                        )
-                                        Text(
-                                            text = if (currentUser != null) "Hello, ${currentUser!!.firstName} (${currentUser!!.category})" else "Welcome, Guest",
-                                            fontSize = 13.sp,
-                                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)
-                                        )
+                                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                        Row(
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                                        ) {
+                                            Box(
+                                                modifier = Modifier
+                                                    .size(56.dp)
+                                                    .clip(CircleShape)
+                                                    .background(MaterialTheme.colorScheme.surface)
+                                                    .border(2.dp, MaterialTheme.colorScheme.primary, CircleShape),
+                                                contentAlignment = Alignment.Center
+                                            ) {
+                                                if (currentUser != null && currentUser!!.profileImageUrl.isNotBlank()) {
+                                                    AsyncImage(
+                                                        model = currentUser!!.profileImageUrl,
+                                                        contentDescription = "Profile Picture",
+                                                        modifier = Modifier.fillMaxSize(),
+                                                        contentScale = ContentScale.Crop
+                                                    )
+                                                } else {
+                                                    Icon(
+                                                        imageVector = Icons.Default.Person,
+                                                        contentDescription = null,
+                                                        modifier = Modifier.size(32.dp),
+                                                        tint = MaterialTheme.colorScheme.primary
+                                                    )
+                                                }
+                                            }
+                                            Column {
+                                                Text(
+                                                    text = if (currentUser != null) "${currentUser!!.firstName} ${currentUser!!.lastName}" else "Guest User",
+                                                    fontSize = 16.sp,
+                                                    fontWeight = FontWeight.Bold,
+                                                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                                                )
+                                                Text(
+                                                    text = if (currentUser != null) currentUser!!.email else "Sign in to access profile",
+                                                    fontSize = 11.sp,
+                                                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                                                )
+                                            }
+                                        }
+
+                                        if (currentUser != null) {
+                                            Surface(
+                                                shape = RoundedCornerShape(8.dp),
+                                                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
+                                            ) {
+                                                Text(
+                                                    text = "🏷️ Persona: ${currentUser!!.category} | 📍 ${currentUser!!.city}",
+                                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                                                    fontSize = 11.sp,
+                                                    fontWeight = FontWeight.Bold,
+                                                    color = MaterialTheme.colorScheme.primary
+                                                )
+                                            }
+                                        }
                                     }
                                 }
 
@@ -386,6 +458,27 @@ class MainActivity : ComponentActivity() {
                                     },
                                     modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
                                 )
+
+                                Spacer(modifier = Modifier.weight(1f))
+                                HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+                                NavigationDrawerItem(
+                                    label = {
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.SpaceBetween,
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Text("🌙 Dark Mode", fontWeight = FontWeight.Bold)
+                                            Switch(
+                                                checked = isDarkTheme,
+                                                onCheckedChange = { isDarkTheme = it }
+                                            )
+                                        }
+                                    },
+                                    selected = false,
+                                    onClick = { isDarkTheme = !isDarkTheme },
+                                    modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
+                                )
                             }
                         }
                     ) {
@@ -418,6 +511,14 @@ class MainActivity : ComponentActivity() {
                                     CatalogScreen(
                                         cartItems = cartItems,
                                         categories = categoriesState,
+                                        wishlistItems = wishlistItems,
+                                        onToggleWishlist = { item ->
+                                            wishlistItems = if (wishlistItems.any { it.id == item.id }) {
+                                                wishlistItems.filterNot { it.id == item.id }
+                                            } else {
+                                                wishlistItems + item
+                                            }
+                                        },
                                         onAddToCart = { newItem ->
                                             cartItems = addOrMergeCartItem(cartItems, newItem)
                                         },
@@ -427,6 +528,20 @@ class MainActivity : ComponentActivity() {
                                         onOpenDrawer = { scope.launch { drawerState.open() } },
                                         onOpenSmartAI = { currentDestination = NavDestination.SMART_AI },
                                         onProceedToCheckout = { currentDestination = NavDestination.MY_CART }
+                                    )
+                                }
+
+                                NavDestination.WISHLIST -> {
+                                    WishlistScreen(
+                                        wishlistItems = wishlistItems,
+                                        onRemoveFromWishlist = { item ->
+                                            wishlistItems = wishlistItems.filterNot { it.id == item.id }
+                                        },
+                                        onAddToCart = { cartItem ->
+                                            cartItems = addOrMergeCartItem(cartItems, cartItem)
+                                        },
+                                        onOpenDrawer = { scope.launch { drawerState.open() } },
+                                        onBack = { currentDestination = NavDestination.CATALOG }
                                     )
                                 }
 

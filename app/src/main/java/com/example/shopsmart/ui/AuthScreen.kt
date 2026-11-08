@@ -303,7 +303,7 @@ fun AuthScreen(
                                     onCheckedChange = { rememberMe = it }
                                 )
                                 Spacer(modifier = Modifier.width(8.dp))
-                                Text("Remember Me (Keep me signed in)", fontSize = 13.sp, fontWeight = FontWeight.Medium)
+                                Text("Remember Me", fontSize = 13.sp, fontWeight = FontWeight.Medium)
                             }
 
                             TextButton(

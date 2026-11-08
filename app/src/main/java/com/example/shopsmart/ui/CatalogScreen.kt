@@ -13,6 +13,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.filled.Search
@@ -41,6 +43,8 @@ import java.util.Locale
 fun CatalogScreen(
     cartItems: List<CartItem>,
     categories: List<Category> = SHOP_CATEGORIES,
+    wishlistItems: List<ShopItem> = emptyList(),
+    onToggleWishlist: (ShopItem) -> Unit = {},
     onAddToCart: (CartItem) -> Unit,
     onSelectItem: (ShopItem) -> Unit,
     onOpenDrawer: () -> Unit,
@@ -159,129 +163,118 @@ fun CatalogScreen(
             }
         }
     ) { padding ->
-        LazyColumn(
+        Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
                 .background(MaterialTheme.colorScheme.background)
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+                .padding(horizontal = 16.dp, vertical = 8.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             // Smart AI Banner Callout
-            item {
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable { onOpenSmartAI() },
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.primaryContainer
-                    ),
-                    shape = RoundedCornerShape(12.dp),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { onOpenSmartAI() },
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.primaryContainer
+                ),
+                shape = RoundedCornerShape(12.dp),
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+            ) {
+                Row(
+                    modifier = Modifier.padding(12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    Row(
-                        modifier = Modifier.padding(16.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    Surface(
+                        color = MaterialTheme.colorScheme.primary,
+                        shape = RoundedCornerShape(10.dp),
+                        modifier = Modifier.size(40.dp)
                     ) {
-                        Surface(
-                            color = MaterialTheme.colorScheme.primary,
-                            shape = RoundedCornerShape(10.dp),
-                            modifier = Modifier.size(48.dp)
-                        ) {
-                            Box(contentAlignment = Alignment.Center) {
-                                Icon(
-                                    imageVector = Icons.Default.AutoAwesome,
-                                    contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.onPrimary,
-                                    modifier = Modifier.size(28.dp)
-                                )
-                            }
-                        }
-
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = "🤖 Smart AI Budgeting Assistant",
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 16.sp,
-                                color = MaterialTheme.colorScheme.primary
+                        Box(contentAlignment = Alignment.Center) {
+                            Icon(
+                                imageVector = Icons.Default.AutoAwesome,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onPrimary,
+                                modifier = Modifier.size(24.dp)
                             )
-                             }
+                        }
+                    }
 
+                    Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = "TRY NOW →",
-                            fontWeight = FontWeight.ExtraBold,
-                            fontSize = 12.sp,
+                            text = "🤖 Smart AI Budgeting Assistant",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 14.sp,
                             color = MaterialTheme.colorScheme.primary
                         )
                     }
+
+                    Text(
+                        text = "TRY NOW →",
+                        fontWeight = FontWeight.ExtraBold,
+                        fontSize = 11.sp,
+                        color = MaterialTheme.colorScheme.primary
+                    )
                 }
             }
 
-            // Search Bar
-            item {
-                OutlinedTextField(
-                    value = searchQuery,
-                    onValueChange = { searchQuery = it },
-                    placeholder = { Text("Search gloceries") },
-                    leadingIcon = {
-                        Icon(
-                            imageVector = Icons.Default.Search,
-                            contentDescription = "Search"
-                        )
-                    },
-                    trailingIcon = {
-                        if (searchQuery.isNotEmpty()) {
-                            IconButton(onClick = { searchQuery = "" }) {
-                                Icon(
-                                    imageVector = Icons.Default.Clear,
-                                    contentDescription = "Clear Search"
-                                )
-                            }
-                        }
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = MaterialTheme.colorScheme.primary,
-                        unfocusedContainerColor = MaterialTheme.colorScheme.surface,
-                        focusedContainerColor = MaterialTheme.colorScheme.surface
-                    ),
-                    singleLine = true
-                )
-            }
-
-            // Category Filter Pills
-            item {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(
-                        text = "Browse Categories",
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 16.sp
+            // Search Bar (Frozen / Sticky at top)
+            OutlinedTextField(
+                value = searchQuery,
+                onValueChange = { searchQuery = it },
+                placeholder = { Text("Search groceries...") },
+                leadingIcon = {
+                    Icon(
+                        imageVector = Icons.Default.Search,
+                        contentDescription = "Search"
                     )
-
-                    LazyRow(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        item {
-                            FilterChip(
-                                selected = selectedCategoryId == 0,
-                                onClick = { selectedCategoryId = 0 },
-                                label = { Text("All Items") }
-                            )
-                        }
-                        items(categories) { category ->
-                            FilterChip(
-                                selected = selectedCategoryId == category.id,
-                                onClick = { selectedCategoryId = category.id },
-                                label = { Text(category.name) }
+                },
+                trailingIcon = {
+                    if (searchQuery.isNotEmpty()) {
+                        IconButton(onClick = { searchQuery = "" }) {
+                            Icon(
+                                imageVector = Icons.Default.Clear,
+                                contentDescription = "Clear Search"
                             )
                         }
                     }
+                },
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = MaterialTheme.colorScheme.primary,
+                    unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+                    focusedContainerColor = MaterialTheme.colorScheme.surface
+                ),
+                singleLine = true
+            )
+
+            // Category Filter Pills (Frozen / Sticky at top)
+            LazyRow(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                item {
+                    FilterChip(
+                        selected = selectedCategoryId == 0,
+                        onClick = { selectedCategoryId = 0 },
+                        label = { Text("All Items") }
+                    )
+                }
+                items(categories) { category ->
+                    FilterChip(
+                        selected = selectedCategoryId == category.id,
+                        onClick = { selectedCategoryId = category.id },
+                        label = { Text(category.name) }
+                    )
                 }
             }
 
-            // Category list with Shop Items
+            HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
+
+            // Category list with Shop Items (Scrollable)
             val selectedCategoryList = if (selectedCategoryId == 0) {
                 categories
             } else {
@@ -301,31 +294,40 @@ fun CatalogScreen(
                 }
             }
 
-            items(displayedCategories) { category ->
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
-                ) {
-                    Column(
-                        modifier = Modifier.padding(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                items(displayedCategories) { category ->
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
                     ) {
-                        Text(
-                            text = "${category.id}. ${category.name}",
-                            fontSize = 18.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.primary
-                        )
-
-                        category.items.forEachIndexed { idx, shopItem ->
-                            CatalogItemRow(
-                                shopItem = shopItem,
-                                onAddToCart = onAddToCart,
-                                onSelectItem = onSelectItem
+                        Column(
+                            modifier = Modifier.padding(16.dp),
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            Text(
+                                text = "${category.id}. ${category.name}",
+                                fontSize = 18.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.primary
                             )
-                            if (idx < category.items.lastIndex) {
-                                HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
+
+                            category.items.forEachIndexed { idx, shopItem ->
+                                CatalogItemRow(
+                                    shopItem = shopItem,
+                                    wishlistItems = wishlistItems,
+                                    onToggleWishlist = onToggleWishlist,
+                                    onAddToCart = onAddToCart,
+                                    onSelectItem = onSelectItem
+                                )
+                                if (idx < category.items.lastIndex) {
+                                    HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
+                                }
                             }
                         }
                     }
@@ -338,6 +340,8 @@ fun CatalogScreen(
 @Composable
 fun CatalogItemRow(
     shopItem: ShopItem,
+    wishlistItems: List<ShopItem> = emptyList(),
+    onToggleWishlist: (ShopItem) -> Unit = {},
     onAddToCart: (CartItem) -> Unit,
     onSelectItem: (ShopItem) -> Unit
 ) {
@@ -359,21 +363,38 @@ fun CatalogItemRow(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.Top
         ) {
-            Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .clickable { onSelectItem(shopItem) }
+            Row(
+                modifier = Modifier.weight(1f),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Text(
-                    text = shopItem.name,
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold
-                )
-                if (shopItem.description.isNotBlank()) {
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .clickable { onSelectItem(shopItem) }
+                ) {
                     Text(
-                        text = shopItem.description,
-                        fontSize = 12.sp,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                        text = shopItem.name,
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                    if (shopItem.description.isNotBlank()) {
+                        Text(
+                            text = shopItem.description,
+                            fontSize = 12.sp,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                        )
+                    }
+                }
+                val isWishlisted = wishlistItems.any { it.id == shopItem.id }
+                IconButton(
+                    onClick = { onToggleWishlist(shopItem) },
+                    modifier = Modifier.size(36.dp)
+                ) {
+                    Icon(
+                        imageVector = if (isWishlisted) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                        contentDescription = "Wishlist",
+                        tint = if (isWishlisted) Color.Red else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
                     )
                 }
             }
