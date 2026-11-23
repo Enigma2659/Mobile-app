@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -294,7 +295,20 @@ fun CatalogScreen(
                 }
             }
 
+            val listState = rememberLazyListState()
+            val firstVisibleIndex by remember { derivedStateOf { listState.firstVisibleItemIndex } }
+            
+            LaunchedEffect(firstVisibleIndex) {
+                if (displayedCategories.isNotEmpty() && firstVisibleIndex in displayedCategories.indices) {
+                    val currentCategory = displayedCategories[firstVisibleIndex]
+                    if (selectedCategoryId != 0) {
+                        selectedCategoryId = currentCategory.id
+                    }
+                }
+            }
+
             LazyColumn(
+                state = listState,
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f),

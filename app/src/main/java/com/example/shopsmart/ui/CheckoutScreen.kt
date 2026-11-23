@@ -144,11 +144,11 @@ fun CheckoutScreen(
                             isProcessing = true
 
                             coroutineScope.launch {
-                                try {
-                                    // Attempt CTech payment gateway call with timeout protection
-                                    processCtechAirtelPayment(grandTotal, airtelNumber)
-                                } catch (e: Exception) {
-                                    Log.w("ShopSimple", "CTech payment warning (proceeding with order): ${e.message}")
+                                val paymentResult = processCtechAirtelPayment(grandTotal, airtelNumber)
+                                if (paymentResult.isFailure) {
+                                    isProcessing = false
+                                    errorMessage = "Payment Declined: ${paymentResult.exceptionOrNull()?.localizedMessage ?: "Wrong PIN or Insufficient Funds"}"
+                                    return@launch
                                 }
 
                                 val timeStamp = SimpleDateFormat("yyyyMMddHHmmss", Locale.getDefault()).format(Date())
@@ -168,10 +168,9 @@ fun CheckoutScreen(
                                         onSubmitOrder(airtelNumber)
                                     },
                                     onError = { e ->
-                                        Log.e("ShopSimple", "Firestore save failed", e)
+                                        Log.e("ShopSimple", "Firestore save-failed", e)
                                         isProcessing = false
-                                        // Ensure customer is not trapped loading on error
-                                        onSubmitOrder(airtelNumber)
+                                        errorMessage = "Firebase Error: ${e.toString()}"
                                     }
                                 )
                             }

@@ -1,6 +1,12 @@
 package com.example.shopsmart.ui
 
+import android.Manifest
+import android.content.Context
 import android.location.Location
+import android.location.LocationManager
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -39,6 +45,52 @@ fun CustomerInfoScreen(
     var isLiveGpsZomba by remember { mutableStateOf(false) }
     var zombaGpsDistance by remember { mutableStateOf(0.0) }
     var zombaGpsFee by remember { mutableStateOf(0.0) }
+
+    val context = LocalContext.current
+    val locationPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (isGranted) {
+            try {
+                val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
+                val loc = try {
+                    locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER)
+                        ?: locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER)
+                } catch (_: SecurityException) {
+                    null
+                }
+
+                val (hubLat, hubLng) = when (selectedCity) {
+                    "Lilongwe" -> Pair(-13.9626, 33.7741)
+                    "Blantyre" -> Pair(-15.7861, 35.0058)
+                    "Zomba" -> Pair(-15.3875, 35.3323) // UNIMA Campus
+                    else -> Pair(-13.9626, 33.7741)
+                }
+
+                val lat = loc?.latitude ?: when (selectedCity) { "Zomba" -> -15.3780; else -> hubLat + 0.02 }
+                val lng = loc?.longitude ?: when (selectedCity) { "Zomba" -> 35.3210; else -> hubLng + 0.02 }
+
+                val results = FloatArray(1)
+                Location.distanceBetween(hubLat, hubLng, lat, lng, results)
+                val distanceKm = (results[0] / 1000.0).coerceAtLeast(0.5)
+                val fee = distanceKm * 250.0
+
+                isLiveGpsZomba = true
+                zombaGpsDistance = distanceKm
+                zombaGpsFee = fee
+                selectedLocation = DeliveryLocation(
+                    id = "real_device_gps",
+                    name = "Live GPS (${String.format(Locale.getDefault(), "%.1f", distanceKm)}km from Hub)",
+                    distanceKm = distanceKm,
+                    deliveryFee = fee
+                )
+            } catch (e: Exception) {
+                errorMessage = "Location error: ${e.localizedMessage}"
+            }
+        } else {
+            errorMessage = "Location permission denied. Please grant permission to detect live GPS."
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -178,37 +230,7 @@ fun CustomerInfoScreen(
 
                     Button(
                         onClick = {
-                            val (hubLat, hubLng) = when (selectedCity) {
-                                "Lilongwe" -> Pair(-13.9626, 33.7741)
-                                "Blantyre" -> Pair(-15.7861, 35.0058)
-                                "Zomba" -> Pair(-15.3875, 35.3323) // UNIMA Campus
-                                else -> Pair(-13.9626, 33.7741)
-                            }
-                            val customLat = when (selectedCity) {
-                                "Zomba" -> -15.3780 // Zomba Botanic Gardens
-                                "Blantyre" -> -15.7950
-                                else -> -13.9500
-                            }
-                            val customLng = when (selectedCity) {
-                                "Zomba" -> 35.3210
-                                "Blantyre" -> 35.0120
-                                else -> 33.7800
-                            }
-
-                            val results = FloatArray(1)
-                            Location.distanceBetween(hubLat, hubLng, customLat, customLng, results)
-                            val distanceKm = (results[0] / 1000.0).coerceAtLeast(1.2)
-                            val fee = distanceKm * 250.0
-
-                            isLiveGpsZomba = true
-                            zombaGpsDistance = distanceKm
-                            zombaGpsFee = fee
-                            selectedLocation = DeliveryLocation(
-                                id = "live_custom_pin",
-                                name = "Live GPS Pin (${String.format(Locale.getDefault(), "%.1f", distanceKm)}km from Hub)",
-                                distanceKm = distanceKm,
-                                deliveryFee = fee
-                            )
+                            locationPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
                         },
                         modifier = Modifier.fillMaxWidth().height(42.dp),
                         colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
