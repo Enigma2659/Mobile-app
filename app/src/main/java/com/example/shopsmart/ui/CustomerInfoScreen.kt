@@ -45,6 +45,7 @@ fun CustomerInfoScreen(
     var isLiveGpsZomba by remember { mutableStateOf(false) }
     var zombaGpsDistance by remember { mutableStateOf(0.0) }
     var zombaGpsFee by remember { mutableStateOf(0.0) }
+    var customLiveAddress by remember { mutableStateOf("") }
 
     val context = LocalContext.current
     val locationPermissionLauncher = rememberLauncherForActivityResult(
@@ -73,7 +74,7 @@ fun CustomerInfoScreen(
                 val results = FloatArray(1)
                 Location.distanceBetween(hubLat, hubLng, lat, lng, results)
                 val distanceKm = (results[0] / 1000.0).coerceAtLeast(0.5)
-                val fee = distanceKm * 250.0
+                val fee = (distanceKm / 6.0) * 200.0
 
                 isLiveGpsZomba = true
                 zombaGpsDistance = distanceKm
@@ -136,6 +137,80 @@ fun CustomerInfoScreen(
                 fontWeight = FontWeight.Bold,
                 fontSize = 18.sp
             )
+
+            // --- PROMINENT LIVE DELIVERY LOCATION CARD ---
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
+                shape = RoundedCornerShape(16.dp),
+                border = BorderStroke(2.dp, MaterialTheme.colorScheme.primary)
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = Icons.Default.MyLocation,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(24.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "📍 Live Delivery Location (Type or GPS)",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 15.sp,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                    Text(
+                        text = "If you are at a custom place right now (e.g., Sadzi, Hospital, Zomba Botanic Gardens), type it below or tap Detect GPS to calculate fee automatically:",
+                        fontSize = 12.sp,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)
+                    )
+
+                    OutlinedTextField(
+                        value = customLiveAddress,
+                        onValueChange = {
+                            customLiveAddress = it
+                            if (it.isNotBlank()) {
+                                selectedLocation = DeliveryLocation(
+                                    id = "custom_live_address",
+                                    name = "Live Address: $it",
+                                    distanceKm = 4.0,
+                                    deliveryFee = 1000.0
+                                )
+                            }
+                        },
+                        label = { Text("My Live Location / Street Address *") },
+                        placeholder = { Text("e.g. Sadzi, Zomba Hospital...") },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(16.dp),
+                        singleLine = true
+                    )
+
+                    Button(
+                        onClick = {
+                            locationPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
+                        },
+                        modifier = Modifier.fillMaxWidth().height(42.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
+                        shape = RoundedCornerShape(16.dp)
+                    ) {
+                        Text("📍 Detect My Live GPS Location", fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                    }
+
+                    if (isLiveGpsZomba) {
+                        Text(
+                            text = "✓ Live GPS Active! Distance: ${String.format(Locale.getDefault(), "%.1f", zombaGpsDistance)} km | Delivery Fee: MK${String.format(Locale.getDefault(), "%.2f", zombaGpsFee)}",
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                }
+            }
 
             Card(
                 modifier = Modifier.fillMaxWidth(),
@@ -249,6 +324,26 @@ fun CustomerInfoScreen(
                     }
                 }
             }
+
+            OutlinedTextField(
+                value = customLiveAddress,
+                onValueChange = {
+                    customLiveAddress = it
+                    if (it.isNotBlank()) {
+                        selectedLocation = DeliveryLocation(
+                            id = "custom_live_address",
+                            name = "Live Address: $it",
+                            distanceKm = 4.0,
+                            deliveryFee = 1000.0
+                        )
+                    }
+                },
+                label = { Text("My Live Location / Street Address (e.g. Sadzi, Hospital)") },
+                placeholder = { Text("Type where you are right now...") },
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                singleLine = true
+            )
 
             Text(
                 text = "Select Delivery Area in $selectedCity",

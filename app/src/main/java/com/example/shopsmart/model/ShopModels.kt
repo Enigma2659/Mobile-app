@@ -98,7 +98,7 @@ data class User(
 )
 
 fun calculateDeliveryFee(distanceKm: Double): Double {
-    return (distanceKm / 6.0) * 0.20
+    return (distanceKm / 6.0) * 200.0
 }
 
 val CITIES_DELIVERY_LOCATIONS = mapOf(

@@ -1,6 +1,7 @@
 package com.example.shopsmart.ui
 
 import android.util.Log
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -44,16 +45,18 @@ fun CheckoutScreen(
     deliveryLocation: DeliveryLocation,
     cartItems: List<CartItem>,
     onBack: () -> Unit,
-    onSubmitOrder: (airtelNumber: String) -> Unit
+    onSubmitOrder: (phoneNumber: String, finalLocName: String) -> Unit
 ) {
     var airtelNumber by remember { mutableStateOf("") }
+    var customCheckoutAddress by remember { mutableStateOf(deliveryLocation.name) }
+    var customDistanceKm by remember { mutableStateOf(deliveryLocation.distanceKm.coerceAtLeast(2.0)) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
     var isProcessing by remember { mutableStateOf(false) }
 
     val coroutineScope = rememberCoroutineScope()
 
     val itemsTotal = cartItems.sumOf { it.totalPrice }
-    val deliveryFee = deliveryLocation.deliveryFee
+    val deliveryFee = customDistanceKm * 250.0
     val grandTotal = itemsTotal + deliveryFee
 
     Scaffold(
@@ -97,7 +100,7 @@ fun CheckoutScreen(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Text("Delivery Fee (${deliveryLocation.distanceKm}:")
+                        Text("Delivery Fee (${String.format(Locale.getDefault(), "%.1f", customDistanceKm)} km):")
                         Text("MK${String.format(Locale.getDefault(), "%.2f", deliveryFee)}")
                     }
                     HorizontalDivider()
@@ -153,19 +156,20 @@ fun CheckoutScreen(
 
                                 val timeStamp = SimpleDateFormat("yyyyMMddHHmmss", Locale.getDefault()).format(Date())
                                 val orderId = "SS-$timeStamp"
+                                val finalLoc = customCheckoutAddress.ifBlank { deliveryLocation.name }
 
                                 saveOrderToFirestore(
                                     orderId = orderId,
                                     firstName = firstName,
                                     lastName = lastName,
                                     phoneNumber = airtelNumber,
-                                    deliveryLocation = deliveryLocation.name,
+                                    deliveryLocation = finalLoc,
                                     items = cartItems,
                                     totalAmount = grandTotal,
                                     onSuccess = {
                                         Log.d("ShopSimple", "Order saved successfully to Firestore.")
                                         isProcessing = false
-                                        onSubmitOrder(airtelNumber)
+                                        onSubmitOrder(airtelNumber, finalLoc)
                                     },
                                     onError = { e ->
                                         Log.e("ShopSimple", "Firestore save-failed", e)
@@ -200,6 +204,60 @@ fun CheckoutScreen(
                 .imePadding(),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
+            // --- CUSTOM LIVE LOCATION CARD WITH TRACKING ---
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
+                shape = RoundedCornerShape(16.dp),
+                border = BorderStroke(2.dp, MaterialTheme.colorScheme.primary)
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    Text(
+                        text = "➡️[ CUSTOM DELIVERY SPOT]",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 15.sp,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                    Text(
+                        text = "Type your live street address or place (e.g. Sadzi, Hospital)",
+                        fontSize = 12.sp,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)
+                    )
+                    OutlinedTextField(
+                        value = customCheckoutAddress,
+                        onValueChange = { customCheckoutAddress = it },
+                        label = { Text("My Live Location / Street Address *") },
+                        placeholder = { Text("e.g. Sadzi, Hospital...") },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(16.dp),
+                        singleLine = true
+                    )
+
+                    Button(
+                        onClick = {
+                            val estDist = if (customCheckoutAddress.contains("sadzi", true)) 3.5
+                            else if (customCheckoutAddress.contains("hospital", true)) 5.0
+                            else 4.0
+                            customDistanceKm = estDist
+                        },
+                        modifier = Modifier.fillMaxWidth().height(40.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
+                        shape = RoundedCornerShape(16.dp)
+                    ) {
+                        Text("📍 Track Location & Calculate Distance", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                    }
+
+                    Text(
+                        text = "✓ Distance from Hub: ${String.format(Locale.getDefault(), "%.1f", customDistanceKm)} km | Fee: MK${String.format(Locale.getDefault(), "%.2f", deliveryFee)}",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
+            }
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)

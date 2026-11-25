@@ -593,15 +593,16 @@ class MainActivity : ComponentActivity() {
                                                     checkoutCustomerState = null
                                                 }
                                             },
-                                            onSubmitOrder = { phoneNumber ->
+                                            onSubmitOrder = { phoneNumber, finalLocName ->
                                                 val timeStamp = SimpleDateFormat("yyyyMMddHHmmss", Locale.getDefault()).format(Date())
                                                 val orderId = "SS-$timeStamp"
+                                                val customDeliveryLoc = checkoutCustomerState!!.location.copy(name = finalLocName)
                                                 val completed = CompletedOrder(
                                                     orderId = orderId,
                                                     firstName = checkoutCustomerState!!.firstName,
                                                     lastName = checkoutCustomerState!!.lastName,
                                                     phoneNumber = phoneNumber,
-                                                    deliveryLocation = checkoutCustomerState!!.location,
+                                                    deliveryLocation = customDeliveryLoc,
                                                     items = cartItems,
                                                     status = "Not Delivered"
                                                 )
@@ -615,7 +616,7 @@ class MainActivity : ComponentActivity() {
                                                     "firstName" to completed.firstName,
                                                     "lastName" to completed.lastName,
                                                     "phoneNumber" to completed.phoneNumber,
-                                                    "deliveryLocation" to completed.deliveryLocation.name,
+                                                    "deliveryLocation" to customDeliveryLoc.name,
                                                     "status" to completed.status,
                                                     "timestamp" to completed.timestamp,
                                                     "items" to completed.items.map { item ->
